@@ -80,15 +80,15 @@ void StopwatchView::init(lv_obj_t* parent)
     _header_panel->setBgOpa(LV_OPA_COVER);
 
     _time_bg_panel = std::make_unique<Container>(_panel->get());
-    _time_bg_panel->align(LV_ALIGN_CENTER, -83, 0);
-    _time_bg_panel->setSize(398, 201);
+    _time_bg_panel->align(LV_ALIGN_CENTER, -83, -8);
+    _time_bg_panel->setSize(360, 170);
     _time_bg_panel->setRadius(4);
     _time_bg_panel->setBorderWidth(0);
     _time_bg_panel->setBgColor(lv_color_hex(_color_time_bg));
     _time_bg_panel->setBgOpa(LV_OPA_COVER);
 
     _title_bg_panel = std::make_unique<Container>(_panel->get());
-    _title_bg_panel->align(LV_ALIGN_CENTER, 42, -122);
+    _title_bg_panel->align(LV_ALIGN_CENTER, 42, -95);
     _title_bg_panel->setSize(148, 26);
     _title_bg_panel->setRadius(1);
     _title_bg_panel->setBorderWidth(0);
@@ -128,28 +128,28 @@ void StopwatchView::init(lv_obj_t* parent)
     _centis_label->setText("00");
     _centis_label->setTextFont(&lv_font_montserrat_18);
     _centis_label->setTextColor(lv_color_hex(_color_time2));
-    _centis_label->align(LV_ALIGN_CENTER, 76, -41);
+    _centis_label->align(LV_ALIGN_CENTER, 58, -31);
 
     _title_label = std::make_unique<Label>(_panel->get());
     _title_label->setText("STOPWATCH");
     _title_label->setTextColor(lv_color_hex(_color_white));
-    _title_label->align(LV_ALIGN_CENTER, 21, -121);
+    _title_label->align(LV_ALIGN_CENTER, 21, -94);
 
     _minutes_caption = std::make_unique<Label>(_panel->get());
     _minutes_caption->setText("MINUTES");
     _minutes_caption->setTextColor(lv_color_hex(_color_dim_1));
-    _minutes_caption->align(LV_ALIGN_CENTER, -157, -82);
+    _minutes_caption->align(LV_ALIGN_CENTER, -140, -58);
 
     _seconds_caption = std::make_unique<Label>(_panel->get());
     _seconds_caption->setText("SECONDS");
     _seconds_caption->setTextColor(lv_color_hex(_color_dim_1));
-    _seconds_caption->align(LV_ALIGN_CENTER, -34, -82);
+    _seconds_caption->align(LV_ALIGN_CENTER, -40, -58);
 
     _centis_caption = std::make_unique<Label>(_panel->get());
     _centis_caption->setText("SEC/100");
     _centis_caption->setTextFont(&lv_font_montserrat_10);
     _centis_caption->setTextColor(lv_color_hex(_color_dim_2));
-    _centis_caption->align(LV_ALIGN_CENTER, 74, -15);
+    _centis_caption->align(LV_ALIGN_CENTER, 58, -14);
 
     /* ------------------------------ State dots ---------------------------------*/
     _state_dot_start = std::make_unique<Container>(_panel->get());
