@@ -22,5 +22,6 @@ idf_component_register(
         ${MY_INCS}
     EMBED_FILES
         "assets/sfx/boot_sfx.bin"
-    # EMBED_TXTFILES re-added in Task 7 for the Moments upload page.
+    EMBED_TXTFILES
+        "apps/app_moments/assets/moments_upload.html"
 )

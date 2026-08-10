@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>M5 Moments</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center;
+           background: #090b10; color: #f7f7f8; }
+    main { width: min(88vw, 420px); padding: 28px; border: 1px solid #30333b;
+           border-radius: 22px; background: #151821; box-shadow: 0 18px 60px #0008; }
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    p { color: #afb3bd; line-height: 1.55; }
+    input { display: block; width: 100%; margin: 22px 0; }
+    button { width: 100%; border: 0; border-radius: 14px; padding: 14px;
+             font-size: 16px; font-weight: 700; color: white; background: #5865f2;
+             margin-top: 12px; }
+    button:disabled { opacity: .55; }
+    button.secondary { background: #2c2f3a; }
+    progress { width: 100%; margin-top: 18px; accent-color: #7c86ff; }
+    #status { min-height: 24px; margin-bottom: 0; }
+  </style>
+</head>
+<body><main>
+  <h1>M5 Moments</h1>
+  <p>一次选择 1～5 张图片，新图片将替换原有图片。上传后点击手表左半屏查看上一张，点击右半屏查看下一张。</p>
+  <input id="files" type="file" multiple accept="image/jpeg,image/png,image/bmp,.jpg,.jpeg,.png,.bmp">
+  <button id="upload">上传并播放</button>
+  <button id="done" class="secondary" hidden>完成，退出上传模式</button>
+  <progress id="progress" max="100" value="0" hidden></progress>
+  <p id="status"></p>
+</main>
+<script>
+const picker = document.querySelector('#files');
+const button = document.querySelector('#upload');
+const doneButton = document.querySelector('#done');
+const status = document.querySelector('#status');
+const progress = document.querySelector('#progress');
+
+function canvasToBmp(canvas) {
+  const width = canvas.width;
+  const height = canvas.height;
+  const pixels = canvas.getContext('2d').getImageData(0, 0, width, height).data;
+  const rowSize = (width * 3 + 3) & ~3;
+  const pixelBytes = rowSize * height;
+  const buffer = new ArrayBuffer(54 + pixelBytes);
+  const view = new DataView(buffer);
+  const bytes = new Uint8Array(buffer);
+
+  bytes[0] = 0x42; bytes[1] = 0x4d;
+  view.setUint32(2, 54 + pixelBytes, true);
+  view.setUint32(10, 54, true);
+  view.setUint32(14, 40, true);
+  view.setInt32(18, width, true);
+  view.setInt32(22, height, true);
+  view.setUint16(26, 1, true);
+  view.setUint16(28, 24, true);
+  view.setUint32(34, pixelBytes, true);
+  view.setInt32(38, 2835, true);
+  view.setInt32(42, 2835, true);
+
+  for (let y = 0; y < height; y++) {
+    const sourceRow = y * width * 4;
+    const targetRow = 54 + (height - 1 - y) * rowSize;
+    for (let x = 0; x < width; x++) {
+      const source = sourceRow + x * 4;
+      const target = targetRow + x * 3;
+      bytes[target] = pixels[source + 2];
+      bytes[target + 1] = pixels[source + 1];
+      bytes[target + 2] = pixels[source];
+    }
+  }
+  return new Blob([buffer], { type: 'image/bmp' });
+}
+
+function createWatchPreview(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 466;
+        canvas.height = 466;
+        const context = canvas.getContext('2d', { alpha: false });
+        context.fillStyle = '#000';
+        context.fillRect(0, 0, 466, 466);
+        context.drawImage(image, 0, 0, 466, 466);
+        const blob = canvasToBmp(canvas);
+        URL.revokeObjectURL(url);
+        resolve(blob);
+      } catch (_) {
+        URL.revokeObjectURL(url);
+        reject(new Error('图片处理失败'));
+      }
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error(`${file.name} 无法读取`));
+    };
+    image.src = url;
+  });
+}
+
+function sendFile(file, index, total, batch) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    let url = `/upload?batch=${encodeURIComponent(batch)}`;
+    if (index === 0) url += '&reset=1';
+    if (index === total - 1) url += '&last=1';
+    xhr.open('POST', url);
+    xhr.setRequestHeader('Content-Type', 'image/bmp');
+    xhr.upload.onprogress = event => {
+      if (event.lengthComputable) progress.value = (index + event.loaded / event.total) / total * 100;
+    };
+    xhr.onload = () => {
+      let result = {}; try { result = JSON.parse(xhr.responseText); } catch (_) {}
+      if (xhr.status === 200) resolve();
+      else reject(new Error(result.error || '上传失败'));
+    };
+    xhr.onerror = () => reject(new Error('连接中断，请重试'));
+    xhr.send(file);
+  });
+}
+
+button.onclick = async () => {
+  const files = Array.from(picker.files);
+  if (!files.length) { status.textContent = '请先选择图片'; return; }
+  if (files.length > 5) { status.textContent = '最多只能选择 5 张图片'; return; }
+
+  button.disabled = true;
+  doneButton.hidden = true;
+  progress.hidden = false;
+  progress.value = 0;
+  const batch = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  try {
+    for (let index = 0; index < files.length; index++) {
+      status.textContent = `正在生成预览图 ${index + 1}/${files.length}…`;
+      const preview = await createWatchPreview(files[index]);
+      status.textContent = `正在上传 ${index + 1}/${files.length}…`;
+      await sendFile(preview, index, files.length, batch);
+    }
+    progress.value = 100;
+    status.textContent = `上传成功，共 ${files.length} 张图片`;
+    doneButton.hidden = false;
+  } catch (error) {
+    status.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+};
+
+doneButton.onclick = async () => {
+  doneButton.disabled = true;
+  status.textContent = '正在退出上传模式…';
+  try {
+    await fetch('/close', { method: 'POST' });
+  } catch (_) {
+    // The watch may tear down the AP before the response arrives.
+  }
+  status.textContent = '已完成，可以断开手机 WiFi 了';
+};
+</script></body></html>
