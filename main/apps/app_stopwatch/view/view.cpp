@@ -107,24 +107,47 @@ void StopwatchView::init(lv_obj_t* parent)
     _title_label->align(LV_ALIGN_CENTER, 0, -178);
 
     /* --------------------------------- State row --------------------------------*/
+    constexpr int _state_dot_size = 10;
+
+    _state_dot_reset = std::make_unique<Container>(_panel->get());
+    _state_dot_reset->setSize(_state_dot_size, _state_dot_size);
+    _state_dot_reset->setRadius(2);
+    _state_dot_reset->setBorderWidth(0);
+    _state_dot_reset->setBgOpa(LV_OPA_COVER);
+    _state_dot_reset->align(LV_ALIGN_CENTER, -142, -142);
+
     _state_label_reset = std::make_unique<Label>(_panel->get());
     _state_label_reset->setText("RESET");
     _state_label_reset->setTextFont(&lv_font_montserrat_16);
-    _state_label_reset->align(LV_ALIGN_CENTER, -110, -142);
+    _state_label_reset->align(LV_ALIGN_CENTER, -104, -142);
+
+    _state_dot_start = std::make_unique<Container>(_panel->get());
+    _state_dot_start->setSize(_state_dot_size, _state_dot_size);
+    _state_dot_start->setRadius(2);
+    _state_dot_start->setBorderWidth(0);
+    _state_dot_start->setBgOpa(LV_OPA_COVER);
+    _state_dot_start->align(LV_ALIGN_CENTER, -32, -142);
 
     _state_label_start = std::make_unique<Label>(_panel->get());
     _state_label_start->setText("START");
     _state_label_start->setTextFont(&lv_font_montserrat_16);
-    _state_label_start->align(LV_ALIGN_CENTER, 0, -142);
+    _state_label_start->align(LV_ALIGN_CENTER, 6, -142);
+
+    _state_dot_stop = std::make_unique<Container>(_panel->get());
+    _state_dot_stop->setSize(_state_dot_size, _state_dot_size);
+    _state_dot_stop->setRadius(2);
+    _state_dot_stop->setBorderWidth(0);
+    _state_dot_stop->setBgOpa(LV_OPA_COVER);
+    _state_dot_stop->align(LV_ALIGN_CENTER, 82, -142);
 
     _state_label_stop = std::make_unique<Label>(_panel->get());
     _state_label_stop->setText("STOP");
     _state_label_stop->setTextFont(&lv_font_montserrat_16);
-    _state_label_stop->align(LV_ALIGN_CENTER, 110, -142);
+    _state_label_stop->align(LV_ALIGN_CENTER, 116, -142);
 
     /* ----------------------------- Time area (full width) -----------------------*/
     _time_bg_panel = std::make_unique<Container>(_panel->get());
-    _time_bg_panel->align(LV_ALIGN_CENTER, 0, -15);
+    _time_bg_panel->align(LV_ALIGN_CENTER, 0, -35);
     _time_bg_panel->setSize(420, 150);
     _time_bg_panel->setRadius(8);
     _time_bg_panel->setBorderWidth(0);
@@ -149,23 +172,23 @@ void StopwatchView::init(lv_obj_t* parent)
     _current_lap_label->setText("LAP --");
     _current_lap_label->setTextFont(&lv_font_montserrat_16);
     _current_lap_label->setTextColor(lv_color_hex(_color_lap_dim));
-    _current_lap_label->align(LV_ALIGN_CENTER, -130, 90);
+    _current_lap_label->align(LV_ALIGN_CENTER, -155, 65);
 
     _best_lap_label = std::make_unique<Label>(_panel->get());
     _best_lap_label->setText("BEST --:--.--");
     _best_lap_label->setTextFont(&lv_font_montserrat_16);
     _best_lap_label->setTextColor(lv_color_hex(_color_lap_value));
-    _best_lap_label->align(LV_ALIGN_CENTER, 0, 90);
+    _best_lap_label->align(LV_ALIGN_CENTER, -15, 65);
 
     _worst_lap_label = std::make_unique<Label>(_panel->get());
     _worst_lap_label->setText("WORST --:--.--");
     _worst_lap_label->setTextFont(&lv_font_montserrat_16);
     _worst_lap_label->setTextColor(lv_color_hex(_color_lap_value));
-    _worst_lap_label->align(LV_ALIGN_CENTER, 130, 90);
+    _worst_lap_label->align(LV_ALIGN_CENTER, 150, 65);
 
     /* ---------------------------------- Lap list ---------------------------------*/
     _laps_area = std::make_unique<TextArea>(_panel->get());
-    _laps_area->align(LV_ALIGN_CENTER, 0, 170);
+    _laps_area->align(LV_ALIGN_CENTER, 0, 140);
     _laps_area->setSize(300, 110);
     _laps_area->setRadius(6);
     _laps_area->setBorderWidth(0);
@@ -195,9 +218,17 @@ void StopwatchView::setPhase(StopwatchPhase phase)
 
     // The word lit up is the action the *next* button press will perform:
     // idle -> "start" lit, running -> "stop" lit, paused -> "reset" lit.
-    _state_label_reset->setTextColor(phase == StopwatchPhase::Paused ? lit_color : dim_color);
-    _state_label_start->setTextColor(phase == StopwatchPhase::Idle ? lit_color : dim_color);
-    _state_label_stop->setTextColor(phase == StopwatchPhase::Running ? lit_color : dim_color);
+    const bool reset_active = phase == StopwatchPhase::Paused;
+    const bool start_active = phase == StopwatchPhase::Idle;
+    const bool stop_active  = phase == StopwatchPhase::Running;
+
+    _state_label_reset->setTextColor(reset_active ? lit_color : dim_color);
+    _state_label_start->setTextColor(start_active ? lit_color : dim_color);
+    _state_label_stop->setTextColor(stop_active ? lit_color : dim_color);
+
+    _state_dot_reset->setBgColor(reset_active ? lit_color : dim_color);
+    _state_dot_start->setBgColor(start_active ? lit_color : dim_color);
+    _state_dot_stop->setBgColor(stop_active ? lit_color : dim_color);
 }
 
 void StopwatchView::addLap(std::size_t lapNumber, uint32_t lapMs, bool isBest, bool isWorst)

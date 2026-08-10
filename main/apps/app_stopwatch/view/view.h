@@ -53,6 +53,9 @@ private:
 
     std::unique_ptr<uitk::lvgl_cpp::Label> _title_label;
 
+    std::unique_ptr<uitk::lvgl_cpp::Container> _state_dot_reset;
+    std::unique_ptr<uitk::lvgl_cpp::Container> _state_dot_start;
+    std::unique_ptr<uitk::lvgl_cpp::Container> _state_dot_stop;
     std::unique_ptr<uitk::lvgl_cpp::Label> _state_label_reset;
     std::unique_ptr<uitk::lvgl_cpp::Label> _state_label_start;
     std::unique_ptr<uitk::lvgl_cpp::Label> _state_label_stop;
