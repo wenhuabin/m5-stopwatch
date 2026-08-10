@@ -107,15 +107,9 @@ void TodoView::init(lv_obj_t* parent)
 
     _title_label = std::make_unique<Label>(_panel->get());
     _title_label->setText("Todo");
-    _title_label->setTextFont(&lv_font_montserrat_28);
+    _title_label->setTextFont(&lv_font_montserrat_36);
     _title_label->setTextColor(lv_color_hex(_color_title));
     _title_label->align(LV_ALIGN_CENTER, 0, -195);
-    // No bigger built-in font is available at a clean 1.5x step, so scale
-    // the rendered glyphs up instead. Pivot must be explicitly centered:
-    // it defaults to the widget's top-left corner, not its center.
-    _title_label->setTransformPivot(LV_PCT(50), LV_PCT(50));
-    lv_obj_set_style_transform_scale_x(_title_label->get(), 384, 0);
-    lv_obj_set_style_transform_scale_y(_title_label->get(), 384, 0);
 
     _list_panel = std::make_unique<Container>(_panel->get());
     _list_panel->align(LV_ALIGN_CENTER, 0, 20);
