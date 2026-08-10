@@ -6,4 +6,4 @@
 #pragma once
 #include "app_template/app_template.h"
 #include "app_launcher/app_launcher.h"
-// #include "app_moments/app_moments.h"  // added in Task 4
+#include "app_moments/app_moments.h"
