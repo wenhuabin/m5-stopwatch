@@ -217,6 +217,10 @@ private:
         config.recv_wait_timeout = 15;
         config.send_wait_timeout = 15;
         config.uri_match_fn      = httpd_uri_match_wildcard;
+        // handle_upload() has a 4KB streaming buffer plus a deep synchronous
+        // call chain into FATFS/wear-levelling/flash read; the 4KB default
+        // stack_size overflows and corrupts adjacent heap memory.
+        config.stack_size = 10240;
 
         esp_err_t ret = httpd_start(&_server, &config);
         if (ret != ESP_OK) {
