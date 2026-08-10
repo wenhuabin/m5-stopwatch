@@ -33,33 +33,48 @@ private:
     bool _is_cancelled = false;
 };
 
+enum class TapSide {
+    None,
+    Left,
+    Right,
+};
+
 class MomentsView {
 public:
     void init(lv_obj_t* parent = lv_screen_active());
 
-    // Rebuilds the horizontally swipeable photo strip (or shows the
-    // empty-state hint if `photoPaths` is empty), and resets scroll
-    // position back to the first photo.
+    // Replaces the displayed photo list and shows the first photo (or
+    // the empty-state hint if `photoPaths` is empty).
     void setPhotos(const std::vector<std::string>& photoPaths);
+
+    void showNext();
+    void showPrevious();
 
     // Runs pending dialog state transitions. Call once per app loop
     // iteration.
     void update();
 
+    // Consumes (and clears) a pending tap-navigation request.
+    TapSide consumeTap();
+
     // Consumes (and clears) a pending "user confirmed upload" request.
     bool consumeUploadRequested();
 
 private:
+    void showPhoto(std::size_t index);
     void showUploadDialog();
+    static void handleClicked(lv_event_t* e);
     static void handleLongPressed(lv_event_t* e);
 
     std::unique_ptr<uitk::lvgl_cpp::Container> _panel;
-    std::vector<std::unique_ptr<uitk::lvgl_cpp::Image>> _photo_images;
+    std::unique_ptr<uitk::lvgl_cpp::Image> _image;
     std::unique_ptr<uitk::lvgl_cpp::Label> _empty_hint_label;
     std::unique_ptr<MomentsUploadDialog> _upload_dialog;
 
     std::vector<std::string> _photo_paths;
-    bool _upload_requested = false;
+    std::size_t _photo_index = 0;
+    TapSide _pending_tap     = TapSide::None;
+    bool _upload_requested   = false;
 };
 
 }  // namespace view

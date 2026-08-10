@@ -80,6 +80,8 @@ void MomentsUploadDialog::init(lv_obj_t* parent)
 void MomentsView::init(lv_obj_t* parent)
 {
     _photo_paths.clear();
+    _photo_index      = 0;
+    _pending_tap      = TapSide::None;
     _upload_requested = false;
 
     _panel = std::make_unique<Container>(parent);
@@ -90,14 +92,13 @@ void MomentsView::init(lv_obj_t* parent)
     _panel->setPaddingAll(0);
     _panel->setBgColor(lv_color_black());
     _panel->setBgOpa(LV_OPA_COVER);
-    _panel->setScrollbarMode(LV_SCROLLBAR_MODE_OFF);
-    // One snap point per swipe, matching a phone photo gallery instead of
-    // a free-scrolling list. Locked to horizontal so a slightly-off-axis
-    // tap doesn't register as a vertical drag.
-    _panel->addFlag(LV_OBJ_FLAG_SCROLL_ONE);
-    lv_obj_set_scroll_dir(_panel->get(), LV_DIR_HOR);
-    lv_obj_set_scroll_snap_x(_panel->get(), LV_SCROLL_SNAP_CENTER);
+    _panel->removeFlag(LV_OBJ_FLAG_SCROLLABLE);
+    _panel->addEventCb(handleClicked, LV_EVENT_CLICKED, this);
     _panel->addEventCb(handleLongPressed, LV_EVENT_LONG_PRESSED, this);
+
+    _image = std::make_unique<Image>(_panel->get());
+    _image->align(LV_ALIGN_CENTER, 0, 0);
+    _image->setHidden(true);
 
     _empty_hint_label = std::make_unique<Label>(_panel->get());
     _empty_hint_label->setText("No photos yet\nTap and hold to upload");
@@ -106,29 +107,50 @@ void MomentsView::init(lv_obj_t* parent)
     _empty_hint_label->setWidth(_hint_width);
     _empty_hint_label->setTextAlign(LV_TEXT_ALIGN_CENTER);
     _empty_hint_label->align(LV_ALIGN_CENTER, 0, 0);
-    _empty_hint_label->addFlag(LV_OBJ_FLAG_FLOATING);
     _empty_hint_label->setHidden(true);
 }
 
 void MomentsView::setPhotos(const std::vector<std::string>& photoPaths)
 {
     _photo_paths = photoPaths;
-    _photo_images.clear();
+    showPhoto(0);
+}
 
-    for (std::size_t index = 0; index < _photo_paths.size(); ++index) {
-        auto image = std::make_unique<Image>(_panel->get());
-        image->setAlign(LV_ALIGN_CENTER);
-        image->setPos(static_cast<lv_coord_t>(index * _panel_size), 0);
-        const std::string lvgl_path = "A:" + _photo_paths[index];
-        lv_image_set_src(image->get(), lvgl_path.c_str());
-        _photo_images.push_back(std::move(image));
+void MomentsView::showPhoto(std::size_t index)
+{
+    if (_photo_paths.empty()) {
+        if (_image) {
+            _image->setHidden(true);
+        }
+        if (_empty_hint_label) {
+            _empty_hint_label->setHidden(false);
+        }
+        return;
     }
 
-    lv_obj_scroll_to(_panel->get(), 0, 0, LV_ANIM_OFF);
-
+    _photo_index = index % _photo_paths.size();
+    const std::string lvgl_path = "A:" + _photo_paths[_photo_index];
+    lv_image_set_src(_image->get(), lvgl_path.c_str());
+    _image->setHidden(false);
     if (_empty_hint_label) {
-        _empty_hint_label->setHidden(!_photo_paths.empty());
+        _empty_hint_label->setHidden(true);
     }
+}
+
+void MomentsView::showNext()
+{
+    if (_photo_paths.size() < 2) {
+        return;
+    }
+    showPhoto(_photo_index + 1);
+}
+
+void MomentsView::showPrevious()
+{
+    if (_photo_paths.size() < 2) {
+        return;
+    }
+    showPhoto((_photo_index + _photo_paths.size() - 1) % _photo_paths.size());
 }
 
 void MomentsView::update()
@@ -148,6 +170,13 @@ void MomentsView::update()
     }
 }
 
+TapSide MomentsView::consumeTap()
+{
+    const TapSide tap = _pending_tap;
+    _pending_tap       = TapSide::None;
+    return tap;
+}
+
 bool MomentsView::consumeUploadRequested()
 {
     const bool requested = _upload_requested;
@@ -160,6 +189,23 @@ void MomentsView::showUploadDialog()
     _upload_dialog.reset();
     _upload_dialog = std::make_unique<MomentsUploadDialog>();
     _upload_dialog->init(lv_screen_active());
+}
+
+void MomentsView::handleClicked(lv_event_t* e)
+{
+    auto* self = static_cast<MomentsView*>(lv_event_get_user_data(e));
+    if (self == nullptr || self->_photo_paths.size() < 2) {
+        return;
+    }
+
+    lv_indev_t* indev = lv_event_get_indev(e);
+    if (indev == nullptr) {
+        return;
+    }
+
+    lv_point_t point;
+    lv_indev_get_point(indev, &point);
+    self->_pending_tap = (point.x < _panel_size / 2) ? TapSide::Left : TapSide::Right;
 }
 
 void MomentsView::handleLongPressed(lv_event_t* e)
