@@ -105,11 +105,11 @@ void StopwatchView::init(lv_obj_t* parent)
     _title_label->setText("STOPWATCH");
     _title_label->setTextFont(&lv_font_montserrat_24);
     _title_label->setTextColor(lv_color_hex(_color_white));
-    _title_label->align(LV_ALIGN_CENTER, 0, -158);
+    _title_label->align(LV_ALIGN_CENTER, 0, -167);
 
     /* --------------------------------- State row --------------------------------*/
     constexpr int _state_dot_size = 10;
-    constexpr int _state_row_y    = -128;
+    constexpr int _state_row_y    = -129;
 
     _state_dot_reset = std::make_unique<Container>(_panel->get());
     _state_dot_reset->setSize(_state_dot_size, _state_dot_size);
@@ -149,7 +149,7 @@ void StopwatchView::init(lv_obj_t* parent)
 
     /* ----------------------------- Time area (full width) -----------------------*/
     _time_bg_panel = std::make_unique<Container>(_panel->get());
-    _time_bg_panel->align(LV_ALIGN_CENTER, 0, -25);
+    _time_bg_panel->align(LV_ALIGN_CENTER, 0, -36);
     _time_bg_panel->setSize(420, 110);
     _time_bg_panel->setRadius(8);
     _time_bg_panel->setBorderWidth(0);
@@ -164,6 +164,10 @@ void StopwatchView::init(lv_obj_t* parent)
     _time_label->align(LV_ALIGN_CENTER, 0, -6);
     // No bigger built-in font is available (48px is LVGL's largest
     // Montserrat size), so scale the rendered glyphs up 1.5x instead.
+    // The transform pivot defaults to the widget's top-left corner (0,0),
+    // not its center, so without explicitly centering the pivot the scale
+    // grows the glyphs rightward/downward instead of around their middle.
+    _time_label->setTransformPivot(LV_PCT(50), LV_PCT(50));
     lv_obj_set_style_transform_scale_x(_time_label->get(), 384, 0);
     lv_obj_set_style_transform_scale_y(_time_label->get(), 384, 0);
 
@@ -178,24 +182,24 @@ void StopwatchView::init(lv_obj_t* parent)
     _current_lap_label->setText("LAP --");
     _current_lap_label->setTextFont(&lv_font_montserrat_16);
     _current_lap_label->setTextColor(lv_color_hex(_color_lap_dim));
-    _current_lap_label->align(LV_ALIGN_CENTER, -155, 65);
+    _current_lap_label->align(LV_ALIGN_CENTER, -155, 57);
 
     _best_lap_label = std::make_unique<Label>(_panel->get());
     _best_lap_label->setText("BEST --:--.--");
     _best_lap_label->setTextFont(&lv_font_montserrat_16);
     _best_lap_label->setTextColor(lv_color_hex(_color_lap_value));
-    _best_lap_label->align(LV_ALIGN_CENTER, -15, 65);
+    _best_lap_label->align(LV_ALIGN_CENTER, -15, 57);
 
     _worst_lap_label = std::make_unique<Label>(_panel->get());
     _worst_lap_label->setText("WORST --:--.--");
     _worst_lap_label->setTextFont(&lv_font_montserrat_16);
     _worst_lap_label->setTextColor(lv_color_hex(_color_lap_value));
-    _worst_lap_label->align(LV_ALIGN_CENTER, 150, 65);
+    _worst_lap_label->align(LV_ALIGN_CENTER, 150, 57);
 
     /* ---------------------------------- Lap list ---------------------------------*/
     _laps_area = std::make_unique<TextArea>(_panel->get());
-    _laps_area->align(LV_ALIGN_CENTER, 0, 155);
-    _laps_area->setSize(240, 140);
+    _laps_area->align(LV_ALIGN_CENTER, 0, 160);
+    _laps_area->setSize(240, 130);
     _laps_area->setRadius(6);
     _laps_area->setBorderWidth(0);
     _laps_area->setBgColor(lv_color_hex(_color_laps_bg));
