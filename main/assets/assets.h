@@ -15,3 +15,4 @@ LV_IMG_DECLARE(go_home_guide);
 LV_IMG_DECLARE(icon_bat_lightning);
 LV_IMG_DECLARE(icon_moments);
 LV_IMG_DECLARE(icon_stopwatch_app);
+LV_IMG_DECLARE(icon_todo_app);

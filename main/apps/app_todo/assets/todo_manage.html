@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>M5 Todo</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center;
+           background: #090b10; color: #f7f7f8; padding: 24px 0; box-sizing: border-box; }
+    main { width: min(88vw, 420px); padding: 28px; border: 1px solid #30333b;
+           border-radius: 22px; background: #151821; box-shadow: 0 18px 60px #0008; }
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    p { color: #afb3bd; line-height: 1.55; }
+    .add-row { display: flex; gap: 8px; margin: 20px 0; }
+    input[type=text] { flex: 1; min-width: 0; border-radius: 12px; border: 1px solid #30333b;
+           background: #0f1116; color: #f7f7f8; padding: 12px; font-size: 15px; }
+    button { border: 0; border-radius: 14px; padding: 12px 16px;
+             font-size: 15px; font-weight: 700; color: white; background: #5865f2; }
+    button.secondary { background: #2c2f3a; }
+    button.danger { background: #7a2b2b; }
+    button:disabled { opacity: .55; }
+    ul { list-style: none; margin: 0; padding: 0; }
+    li { display: flex; align-items: center; gap: 10px; padding: 10px 0;
+         border-bottom: 1px solid #23262f; }
+    li .text { flex: 1; min-width: 0; word-break: break-word; }
+    li.done .text { color: #6b7280; text-decoration: line-through; }
+    li .actions { display: flex; gap: 6px; flex-shrink: 0; }
+    li .actions button { padding: 8px 10px; font-size: 13px; }
+    #status { min-height: 24px; }
+    #done { width: 100%; margin-top: 20px; }
+  </style>
+</head>
+<body><main>
+  <h1>M5 Todo</h1>
+  <p>新增、编辑或删除待办事项，改动会实时同步到手表上。</p>
+  <div class="add-row">
+    <input id="newText" type="text" maxlength="120" placeholder="新待办事项...">
+    <button id="add">添加</button>
+  </div>
+  <ul id="list"></ul>
+  <p id="status"></p>
+  <button id="done" class="secondary">完成，退出管理模式</button>
+</main>
+<script>
+const listEl = document.querySelector('#list');
+const newText = document.querySelector('#newText');
+const addButton = document.querySelector('#add');
+const status = document.querySelector('#status');
+const doneButton = document.querySelector('#done');
+
+function render(items) {
+  listEl.innerHTML = '';
+  for (const item of items) {
+    const li = document.createElement('li');
+    if (item.completed) li.classList.add('done');
+
+    const text = document.createElement('span');
+    text.className = 'text';
+    text.textContent = item.text;
+    li.appendChild(text);
+
+    const actions = document.createElement('div');
+    actions.className = 'actions';
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'secondary';
+    editBtn.textContent = '编辑';
+    editBtn.onclick = () => editItem(item);
+    actions.appendChild(editBtn);
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'danger';
+    delBtn.textContent = '删除';
+    delBtn.onclick = () => deleteItem(item.id);
+    actions.appendChild(delBtn);
+
+    li.appendChild(actions);
+    listEl.appendChild(li);
+  }
+}
+
+async function loadItems() {
+  try {
+    const res = await fetch('/items');
+    const data = await res.json();
+    render(data.items || []);
+  } catch (error) {
+    status.textContent = '加载失败: ' + error.message;
+  }
+}
+
+async function addItem() {
+  const text = newText.value.trim();
+  if (!text) { status.textContent = '请输入内容'; return; }
+  addButton.disabled = true;
+  try {
+    const res = await fetch('/items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+    const result = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(result.error || '添加失败');
+    newText.value = '';
+    status.textContent = '已添加';
+    await loadItems();
+  } catch (error) {
+    status.textContent = error.message;
+  } finally {
+    addButton.disabled = false;
+  }
+}
+
+async function editItem(item) {
+  const text = prompt('修改待办事项', item.text);
+  if (text === null) return;
+  const trimmed = text.trim();
+  if (!trimmed) { status.textContent = '内容不能为空'; return; }
+  try {
+    const res = await fetch('/items/edit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: item.id, text: trimmed }),
+    });
+    const result = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(result.error || '修改失败');
+    status.textContent = '已修改';
+    await loadItems();
+  } catch (error) {
+    status.textContent = error.message;
+  }
+}
+
+async function deleteItem(id) {
+  if (!confirm('确定删除这条待办事项吗？')) return;
+  try {
+    const res = await fetch('/items/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+    const result = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(result.error || '删除失败');
+    status.textContent = '已删除';
+    await loadItems();
+  } catch (error) {
+    status.textContent = error.message;
+  }
+}
+
+addButton.onclick = addItem;
+newText.addEventListener('keydown', e => { if (e.key === 'Enter') addItem(); });
+
+doneButton.onclick = async () => {
+  doneButton.disabled = true;
+  status.textContent = '正在退出管理模式…';
+  try {
+    await fetch('/close', { method: 'POST' });
+  } catch (_) {
+    // The watch may tear down the AP before the response arrives.
+  }
+  status.textContent = '已完成，可以断开手机 WiFi 了';
+};
+
+loadItems();
+</script></body></html>

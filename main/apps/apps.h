@@ -8,3 +8,4 @@
 #include "app_launcher/app_launcher.h"
 #include "app_moments/app_moments.h"
 #include "app_stopwatch/app_stopwatch.h"
+#include "app_todo/app_todo.h"

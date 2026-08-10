@@ -24,4 +24,5 @@ idf_component_register(
         "assets/sfx/boot_sfx.bin"
     EMBED_TXTFILES
         "apps/app_moments/assets/moments_upload.html"
+        "apps/app_todo/assets/todo_manage.html"
 )
