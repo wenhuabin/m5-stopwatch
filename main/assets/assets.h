@@ -8,6 +8,7 @@
 
 LV_FONT_DECLARE(MontserratSemiBold26);
 LV_FONT_DECLARE(lv_font_maple_mono_medium_28);
+LV_FONT_DECLARE(ChineseFont20);
 
 LV_IMG_DECLARE(icon_indicator_left);
 LV_IMG_DECLARE(icon_indicator_right);

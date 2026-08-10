@@ -113,7 +113,7 @@ void TodoView::init(lv_obj_t* parent)
 
     _list_panel = std::make_unique<Container>(_panel->get());
     _list_panel->align(LV_ALIGN_CENTER, 0, 20);
-    _list_panel->setSize(410, 340);
+    _list_panel->setSize(350, 340);  // 75% of the 466px panel width
     _list_panel->setRadius(0);
     _list_panel->setBorderWidth(0);
     _list_panel->setPaddingAll(0);
@@ -159,11 +159,11 @@ void TodoView::setItems(const std::vector<todo::storage::TodoItem>& items)
 
         auto label = std::make_unique<Label>(row->get());
         label->setText(item.text);
-        label->setTextFont(&lv_font_montserrat_18);
+        label->setTextFont(&ChineseFont20);
         label->setTextColor(item.completed ? lv_color_hex(_color_row_done) : lv_color_hex(_color_row_text));
         lv_obj_set_style_text_decor(label->get(), item.completed ? LV_TEXT_DECOR_STRIKETHROUGH : LV_TEXT_DECOR_NONE,
                                     LV_PART_MAIN);
-        label->setWidth(410 - _label_x - 12);
+        label->setWidth(350 - _label_x - 12);
         label->align(LV_ALIGN_LEFT_MID, _label_x, 0);
 
         const uint32_t id = item.id;
