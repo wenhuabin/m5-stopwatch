@@ -31,6 +31,7 @@ extern "C" void app_main(void)
     // Install apps
     GetMooncake().installApp(std::make_unique<AppLauncher>());
     GetMooncake().installApp(std::make_unique<AppMoments>());
+    GetMooncake().installApp(std::make_unique<AppStopwatch>());
     // GetMooncake().installApp(std::make_unique<AppTemplate>());
 
     // Main loop

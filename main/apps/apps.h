@@ -7,3 +7,4 @@
 #include "app_template/app_template.h"
 #include "app_launcher/app_launcher.h"
 #include "app_moments/app_moments.h"
+#include "app_stopwatch/app_stopwatch.h"
