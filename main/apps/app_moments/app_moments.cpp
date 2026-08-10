@@ -4,8 +4,10 @@
  * SPDX-License-Identifier: MIT
  */
 #include "app_moments.h"
+#include "net/upload_server.h"
 #include "storage/moments_storage.h"
 
+#include <apps/common/loading_page/loading_page.h>
 #include <assets/assets.h>
 #include <hal/hal.h>
 #include <mooncake.h>
@@ -66,7 +68,23 @@ void AppMoments::onRunning()
     _view->update();
 
     if (_view->consumeUploadRequested()) {
-        mclog::tagInfo(getAppInfo().name, "upload requested (upload mode not wired up yet)");
+        mclog::tagInfo(getAppInfo().name, "start upload mode");
+
+        auto loading_page = std::make_unique<view::LoadingPage>(0x000000, 0xFFFFFF);
+        loading_page->setMessage("Starting upload mode...");
+        _view.reset();
+
+        GetHAL().lvglUnlock();
+        moments::net::run_upload_mode([&](std::string_view message) {
+            LvglLockGuard log_lock;
+            loading_page->setMessage(message);
+        });
+        GetHAL().lvglLock();
+
+        loading_page.reset();
+        _view = std::make_unique<view::MomentsView>();
+        _view->init(lv_screen_active());
+        reloadPhotos();
     }
 }
 
