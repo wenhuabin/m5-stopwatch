@@ -92,8 +92,10 @@ void MomentsView::init(lv_obj_t* parent)
     _panel->setBgOpa(LV_OPA_COVER);
     _panel->setScrollbarMode(LV_SCROLLBAR_MODE_OFF);
     // One snap point per swipe, matching a phone photo gallery instead of
-    // a free-scrolling list.
+    // a free-scrolling list. Locked to horizontal so a slightly-off-axis
+    // tap doesn't register as a vertical drag.
     _panel->addFlag(LV_OBJ_FLAG_SCROLL_ONE);
+    lv_obj_set_scroll_dir(_panel->get(), LV_DIR_HOR);
     lv_obj_set_scroll_snap_x(_panel->get(), LV_SCROLL_SNAP_CENTER);
     _panel->addEventCb(handleLongPressed, LV_EVENT_LONG_PRESSED, this);
 

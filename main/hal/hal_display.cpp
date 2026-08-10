@@ -269,7 +269,7 @@ Hal::TouchPoint Hal::getTouchPoint()
 static SemaphoreHandle_t xGuiSemaphore;
 static std::atomic<bool> _lvgl_update_enabled = false;
 
-#define LV_BUFFER_LINE 120
+#define LV_BUFFER_LINE 466
 
 static void lvgl_tick_timer(void *arg)
 {
