@@ -435,9 +435,9 @@ long free_space_bytes();
 #include <cstdio>
 #include <dirent.h>
 #include <sys/stat.h>
-#include <sys/statvfs.h>
 #include <unistd.h>
 
+#include <esp_vfs_fat.h>
 #include <mooncake_log.h>
 
 namespace moments::storage {
@@ -563,11 +563,12 @@ void delete_all_photos()
 
 long free_space_bytes()
 {
-    struct statvfs stat;
-    if (statvfs(kMomentsDir, &stat) != 0) {
+    uint64_t total_bytes = 0;
+    uint64_t free_bytes  = 0;
+    if (esp_vfs_fat_info("/spiflash", &total_bytes, &free_bytes) != ESP_OK) {
         return -1;
     }
-    return static_cast<long>(stat.f_bsize) * static_cast<long>(stat.f_bfree);
+    return static_cast<long>(free_bytes);
 }
 
 }  // namespace moments::storage
