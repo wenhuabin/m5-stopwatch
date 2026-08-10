@@ -115,9 +115,16 @@ bool save_state(const State& state)
         return false;
     }
 
+    // ESP-IDF's FATFS rename() (f_rename) fails with EEXIST if the
+    // destination already exists -- unlike POSIX rename, it will not
+    // atomically replace it. Remove the previous file first.
+    if (unlink(_items_path) != 0 && errno != ENOENT) {
+        mclog::tagWarn(_tag, "failed to remove old {}: errno={}", _items_path, errno);
+    }
+
     if (rename(temp_path.c_str(), _items_path) != 0) {
         unlink(temp_path.c_str());
-        mclog::tagError(_tag, "failed to finalize {}", _items_path);
+        mclog::tagError(_tag, "failed to finalize {}: errno={}", _items_path, errno);
         return false;
     }
 
