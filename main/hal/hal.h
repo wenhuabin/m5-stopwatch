@@ -23,35 +23,6 @@
  * @brief
  *
  */
-struct AlarmStorageEntry {
-    uint8_t hour     = 0;
-    uint8_t minute   = 0;
-    uint8_t enabled  = 0;
-    uint8_t reserved = 0;
-
-    bool isValid() const
-    {
-        return hour < 24 && minute < 60 && enabled <= 1;
-    }
-};
-
-/**
- * @brief
- *
- */
-struct AlarmStorageSnapshot {
-    static constexpr std::size_t maxAlarmCount = 16;
-
-    uint8_t version                                     = 1;
-    uint8_t count                                       = 0;
-    uint16_t reserved                                   = 0;
-    std::array<AlarmStorageEntry, maxAlarmCount> alarms = {};
-};
-
-/**
- * @brief
- *
- */
 struct TimeHms {
     uint8_t hour   = 0;
     uint8_t minute = 0;
@@ -232,10 +203,6 @@ public:
     bool setTimeHms(const TimeHms& time);
     void setTimezone(std::string_view tz);
     std::string getTimezone();
-    bool loadAlarmStorage(AlarmStorageSnapshot& snapshot);
-    bool saveAlarmStorage(const AlarmStorageSnapshot& snapshot);
-    void startAlarm();
-    void stopAlarm();
 
     /* --------------------------------- Button --------------------------------- */
     m5::Button_Class btnA;
@@ -250,12 +217,6 @@ public:
     void updateButtonStates();
     void setButtonConfig(ButtonConfig config, bool saveToSettings = false);
     const ButtonConfig& getButtonConfig(bool loadFromSettings = false);
-
-    /* ---------------------------------- Badge --------------------------------- */
-    bool loadBadgeImage(lv_obj_t* image);
-    bool loadNextBadgeImage(lv_obj_t* image);
-    bool loadPreviousBadgeImage(lv_obj_t* image);
-    void startBadgeEditModeViaAp(std::function<void(std::string_view)> onLog);
 
     /* ---------------------------------- Guide --------------------------------- */
     bool shouldShowGuide();

@@ -30,14 +30,7 @@ extern "C" void app_main(void)
 
     // Install apps
     GetMooncake().installApp(std::make_unique<AppLauncher>());
-    GetMooncake().installApp(std::make_unique<AppAlarmClock>());
-    GetMooncake().installApp(std::make_unique<AppWatchFace>());
-    GetMooncake().installApp(std::make_unique<AppStopWatch>());
-    GetMooncake().installApp(std::make_unique<AppBadge>());
-    GetMooncake().installApp(std::make_unique<AppImu>());
-    GetMooncake().installApp(std::make_unique<AppFft>());
-    GetMooncake().installApp(std::make_unique<AppLuckyWheel>());
-    GetMooncake().installApp(std::make_unique<AppSetup>());
+    // GetMooncake().installApp(std::make_unique<AppMoments>());  // added in Task 4
     // GetMooncake().installApp(std::make_unique<AppTemplate>());
 
     // Main loop
