@@ -47,6 +47,9 @@ managed_components/
 .vscode/
 .cache/
 
+# Claude Code local state
+.claude/
+
 # Python virtual environment
 .venv/
 
