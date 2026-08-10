@@ -64,6 +64,10 @@ void AppMoments::onRunning()
     }
 
     _view->update();
+
+    if (_view->consumeUploadRequested()) {
+        mclog::tagInfo(getAppInfo().name, "upload requested (upload mode not wired up yet)");
+    }
 }
 
 void AppMoments::onClose()
