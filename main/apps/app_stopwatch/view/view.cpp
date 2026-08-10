@@ -161,7 +161,7 @@ void StopwatchView::init(lv_obj_t* parent)
     _time_label->setText("00:00");
     _time_label->setTextFont(&lv_font_montserrat_48);
     _time_label->setTextColor(lv_color_hex(_color_white));
-    _time_label->align(LV_ALIGN_CENTER, 0, -6);
+    _time_label->align(LV_ALIGN_CENTER, 0, 0);
     // No bigger built-in font is available (48px is LVGL's largest
     // Montserrat size), so scale the rendered glyphs up 1.5x instead.
     // The transform pivot defaults to the widget's top-left corner (0,0),
