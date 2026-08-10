@@ -14,19 +14,23 @@
     p { color: #afb3bd; line-height: 1.55; }
     .add-row { display: flex; gap: 8px; margin: 20px 0; }
     input[type=text] { flex: 1; min-width: 0; border-radius: 12px; border: 1px solid #30333b;
-           background: #0f1116; color: #f7f7f8; padding: 12px; font-size: 15px; }
+           background: #0f1116; color: #f7f7f8; padding: 12px; font-size: 15px; box-sizing: border-box; }
     button { border: 0; border-radius: 14px; padding: 12px 16px;
              font-size: 15px; font-weight: 700; color: white; background: #5865f2; }
     button.secondary { background: #2c2f3a; }
     button.danger { background: #7a2b2b; }
     button:disabled { opacity: .55; }
     ul { list-style: none; margin: 0; padding: 0; }
-    li { display: flex; align-items: center; gap: 10px; padding: 10px 0;
-         border-bottom: 1px solid #23262f; }
+    li { padding: 10px 0; border-bottom: 1px solid #23262f; }
+    li .row { display: flex; align-items: center; gap: 10px; }
     li .text { flex: 1; min-width: 0; word-break: break-word; }
     li.done .text { color: #6b7280; text-decoration: line-through; }
     li .actions { display: flex; gap: 6px; flex-shrink: 0; }
     li .actions button { padding: 8px 10px; font-size: 13px; }
+    li .edit-row { display: flex; gap: 6px; }
+    li .edit-row input { padding: 8px 10px; font-size: 14px; }
+    li .confirm-row { display: flex; align-items: center; gap: 10px; }
+    li .confirm-row .prompt { flex: 1; color: #f0b3b3; }
     #status { min-height: 24px; }
     #done { width: 100%; margin-top: 20px; }
   </style>
@@ -49,33 +53,98 @@ const addButton = document.querySelector('#add');
 const status = document.querySelector('#status');
 const doneButton = document.querySelector('#done');
 
+// Rows have three inline states instead of native prompt()/confirm()
+// dialogs, since phones often open this page inside a captive-portal
+// mini-browser that blocks those APIs entirely.
+function renderRow(li, item) {
+  li.innerHTML = '';
+  li.classList.toggle('done', !!item.completed);
+
+  const row = document.createElement('div');
+  row.className = 'row';
+
+  const text = document.createElement('span');
+  text.className = 'text';
+  text.textContent = item.text;
+  row.appendChild(text);
+
+  const actions = document.createElement('div');
+  actions.className = 'actions';
+
+  const editBtn = document.createElement('button');
+  editBtn.className = 'secondary';
+  editBtn.textContent = '编辑';
+  editBtn.onclick = () => renderEditRow(li, item);
+  actions.appendChild(editBtn);
+
+  const delBtn = document.createElement('button');
+  delBtn.className = 'danger';
+  delBtn.textContent = '删除';
+  delBtn.onclick = () => renderDeleteConfirmRow(li, item);
+  actions.appendChild(delBtn);
+
+  row.appendChild(actions);
+  li.appendChild(row);
+}
+
+function renderEditRow(li, item) {
+  li.innerHTML = '';
+
+  const row = document.createElement('div');
+  row.className = 'edit-row';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.maxLength = 120;
+  input.value = item.text;
+  row.appendChild(input);
+
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = '保存';
+  saveBtn.onclick = () => saveEdit(li, item, input.value.trim(), saveBtn);
+  row.appendChild(saveBtn);
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'secondary';
+  cancelBtn.textContent = '取消';
+  cancelBtn.onclick = () => renderRow(li, item);
+  row.appendChild(cancelBtn);
+
+  li.appendChild(row);
+  input.focus();
+}
+
+function renderDeleteConfirmRow(li, item) {
+  li.innerHTML = '';
+
+  const row = document.createElement('div');
+  row.className = 'confirm-row';
+
+  const prompt = document.createElement('span');
+  prompt.className = 'prompt';
+  prompt.textContent = '确定删除这条待办事项吗？';
+  row.appendChild(prompt);
+
+  const confirmBtn = document.createElement('button');
+  confirmBtn.className = 'danger';
+  confirmBtn.textContent = '确定';
+  confirmBtn.onclick = () => confirmDelete(item.id, confirmBtn);
+  row.appendChild(confirmBtn);
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'secondary';
+  cancelBtn.textContent = '取消';
+  cancelBtn.onclick = () => renderRow(li, item);
+  row.appendChild(cancelBtn);
+
+  li.appendChild(row);
+}
+
 function render(items) {
   listEl.innerHTML = '';
   for (const item of items) {
     const li = document.createElement('li');
-    if (item.completed) li.classList.add('done');
-
-    const text = document.createElement('span');
-    text.className = 'text';
-    text.textContent = item.text;
-    li.appendChild(text);
-
-    const actions = document.createElement('div');
-    actions.className = 'actions';
-
-    const editBtn = document.createElement('button');
-    editBtn.className = 'secondary';
-    editBtn.textContent = '编辑';
-    editBtn.onclick = () => editItem(item);
-    actions.appendChild(editBtn);
-
-    const delBtn = document.createElement('button');
-    delBtn.className = 'danger';
-    delBtn.textContent = '删除';
-    delBtn.onclick = () => deleteItem(item.id);
-    actions.appendChild(delBtn);
-
-    li.appendChild(actions);
+    renderRow(li, item);
     listEl.appendChild(li);
   }
 }
@@ -112,16 +181,14 @@ async function addItem() {
   }
 }
 
-async function editItem(item) {
-  const text = prompt('修改待办事项', item.text);
-  if (text === null) return;
-  const trimmed = text.trim();
-  if (!trimmed) { status.textContent = '内容不能为空'; return; }
+async function saveEdit(li, item, text, saveBtn) {
+  if (!text) { status.textContent = '内容不能为空'; return; }
+  saveBtn.disabled = true;
   try {
     const res = await fetch('/items/edit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: item.id, text: trimmed }),
+      body: JSON.stringify({ id: item.id, text }),
     });
     const result = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(result.error || '修改失败');
@@ -129,11 +196,12 @@ async function editItem(item) {
     await loadItems();
   } catch (error) {
     status.textContent = error.message;
+    saveBtn.disabled = false;
   }
 }
 
-async function deleteItem(id) {
-  if (!confirm('确定删除这条待办事项吗？')) return;
+async function confirmDelete(id, confirmBtn) {
+  confirmBtn.disabled = true;
   try {
     const res = await fetch('/items/delete', {
       method: 'POST',
@@ -146,6 +214,7 @@ async function deleteItem(id) {
     await loadItems();
   } catch (error) {
     status.textContent = error.message;
+    confirmBtn.disabled = false;
   }
 }
 
