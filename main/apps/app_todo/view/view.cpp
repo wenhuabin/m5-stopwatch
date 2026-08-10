@@ -107,7 +107,7 @@ void TodoView::init(lv_obj_t* parent)
 
     _title_label = std::make_unique<Label>(_panel->get());
     _title_label->setText("Todo");
-    _title_label->setTextFont(&lv_font_montserrat_36);
+    _title_label->setTextFont(&TodoTitleBold40);
     _title_label->setTextColor(lv_color_hex(_color_title));
     _title_label->align(LV_ALIGN_CENTER, 0, -195);
 
@@ -159,7 +159,7 @@ void TodoView::setItems(const std::vector<todo::storage::TodoItem>& items)
 
         auto label = std::make_unique<Label>(row->get());
         label->setText(item.text);
-        label->setTextFont(&ChineseFont20);
+        label->setTextFont(&ChineseFont24Bold);
         label->setTextColor(item.completed ? lv_color_hex(_color_row_done) : lv_color_hex(_color_row_text));
         lv_obj_set_style_text_decor(label->get(), item.completed ? LV_TEXT_DECOR_STRIKETHROUGH : LV_TEXT_DECOR_NONE,
                                     LV_PART_MAIN);
