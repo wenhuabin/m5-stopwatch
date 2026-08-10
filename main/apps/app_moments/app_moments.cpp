@@ -55,6 +55,14 @@ void AppMoments::onRunning()
     }
 
     LvglLockGuard lock;
+
+    const view::TapSide tap = _view->consumeTap();
+    if (tap == view::TapSide::Left) {
+        _view->showPrevious();
+    } else if (tap == view::TapSide::Right) {
+        _view->showNext();
+    }
+
     _view->update();
 }
 
