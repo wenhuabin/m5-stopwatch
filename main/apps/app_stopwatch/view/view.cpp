@@ -23,7 +23,8 @@ constexpr uint32_t _color_state_dim  = 0x6B6969;
 constexpr uint32_t _color_state_lit  = 0xE33A3A;
 constexpr uint32_t _color_lap_value  = 0x86AECC;
 constexpr uint32_t _color_lap_dim    = 0xB8B8B8;
-constexpr uint32_t _color_laps_bg    = 0x99C0CD;
+constexpr uint32_t _color_laps_bg    = 0x14171C;
+constexpr uint32_t _color_laps_text  = 0xE8ECEF;
 constexpr uint32_t _color_batt_track = 0x2B2B2B;
 constexpr uint32_t _color_batt_fill  = 0x99C0CD;
 
@@ -102,48 +103,49 @@ void StopwatchView::init(lv_obj_t* parent)
 
     _title_label = std::make_unique<Label>(_panel->get());
     _title_label->setText("STOPWATCH");
-    _title_label->setTextFont(&lv_font_montserrat_18);
+    _title_label->setTextFont(&lv_font_montserrat_24);
     _title_label->setTextColor(lv_color_hex(_color_white));
-    _title_label->align(LV_ALIGN_CENTER, 0, -178);
+    _title_label->align(LV_ALIGN_CENTER, 0, -172);
 
     /* --------------------------------- State row --------------------------------*/
     constexpr int _state_dot_size = 10;
+    constexpr int _state_row_y    = -128;
 
     _state_dot_reset = std::make_unique<Container>(_panel->get());
     _state_dot_reset->setSize(_state_dot_size, _state_dot_size);
     _state_dot_reset->setRadius(2);
     _state_dot_reset->setBorderWidth(0);
     _state_dot_reset->setBgOpa(LV_OPA_COVER);
-    _state_dot_reset->align(LV_ALIGN_CENTER, -142, -142);
+    _state_dot_reset->align(LV_ALIGN_CENTER, -142, _state_row_y);
 
     _state_label_reset = std::make_unique<Label>(_panel->get());
     _state_label_reset->setText("RESET");
     _state_label_reset->setTextFont(&lv_font_montserrat_16);
-    _state_label_reset->align(LV_ALIGN_CENTER, -104, -142);
+    _state_label_reset->align(LV_ALIGN_CENTER, -104, _state_row_y);
 
     _state_dot_start = std::make_unique<Container>(_panel->get());
     _state_dot_start->setSize(_state_dot_size, _state_dot_size);
     _state_dot_start->setRadius(2);
     _state_dot_start->setBorderWidth(0);
     _state_dot_start->setBgOpa(LV_OPA_COVER);
-    _state_dot_start->align(LV_ALIGN_CENTER, -32, -142);
+    _state_dot_start->align(LV_ALIGN_CENTER, -32, _state_row_y);
 
     _state_label_start = std::make_unique<Label>(_panel->get());
     _state_label_start->setText("START");
     _state_label_start->setTextFont(&lv_font_montserrat_16);
-    _state_label_start->align(LV_ALIGN_CENTER, 6, -142);
+    _state_label_start->align(LV_ALIGN_CENTER, 6, _state_row_y);
 
     _state_dot_stop = std::make_unique<Container>(_panel->get());
     _state_dot_stop->setSize(_state_dot_size, _state_dot_size);
     _state_dot_stop->setRadius(2);
     _state_dot_stop->setBorderWidth(0);
     _state_dot_stop->setBgOpa(LV_OPA_COVER);
-    _state_dot_stop->align(LV_ALIGN_CENTER, 82, -142);
+    _state_dot_stop->align(LV_ALIGN_CENTER, 82, _state_row_y);
 
     _state_label_stop = std::make_unique<Label>(_panel->get());
     _state_label_stop->setText("STOP");
     _state_label_stop->setTextFont(&lv_font_montserrat_16);
-    _state_label_stop->align(LV_ALIGN_CENTER, 116, -142);
+    _state_label_stop->align(LV_ALIGN_CENTER, 116, _state_row_y);
 
     /* ----------------------------- Time area (full width) -----------------------*/
     _time_bg_panel = std::make_unique<Container>(_panel->get());
@@ -157,15 +159,15 @@ void StopwatchView::init(lv_obj_t* parent)
 
     _time_label = std::make_unique<Label>(_time_bg_panel->get());
     _time_label->setText("00:00");
-    _time_label->setTextFont(&lv_font_montserrat_36);
+    _time_label->setTextFont(&lv_font_montserrat_48);
     _time_label->setTextColor(lv_color_hex(_color_white));
-    _time_label->align(LV_ALIGN_CENTER, -25, -5);
+    _time_label->align(LV_ALIGN_CENTER, -20, -8);
 
     _centis_label = std::make_unique<Label>(_time_bg_panel->get());
     _centis_label->setText("00");
     _centis_label->setTextFont(&lv_font_montserrat_18);
     _centis_label->setTextColor(lv_color_hex(_color_time2));
-    _centis_label->align(LV_ALIGN_CENTER, 75, 10);
+    _centis_label->align(LV_ALIGN_CENTER, 90, 18);
 
     /* ------------------------------- Lap stats row -------------------------------*/
     _current_lap_label = std::make_unique<Label>(_panel->get());
@@ -188,14 +190,15 @@ void StopwatchView::init(lv_obj_t* parent)
 
     /* ---------------------------------- Lap list ---------------------------------*/
     _laps_area = std::make_unique<TextArea>(_panel->get());
-    _laps_area->align(LV_ALIGN_CENTER, 0, 140);
-    _laps_area->setSize(300, 110);
+    _laps_area->align(LV_ALIGN_CENTER, 0, 155);
+    _laps_area->setSize(240, 140);
     _laps_area->setRadius(6);
     _laps_area->setBorderWidth(0);
     _laps_area->setBgColor(lv_color_hex(_color_laps_bg));
     _laps_area->setBgOpa(LV_OPA_COVER);
-    _laps_area->setTextColor(lv_color_hex(0x000000));
+    _laps_area->setTextColor(lv_color_hex(_color_laps_text));
     _laps_area->setTextFont(&lv_font_montserrat_18);
+    _laps_area->setTextAreaAlign(LV_TEXT_ALIGN_CENTER);
     _laps_area->setCursorClickPos(false);
     _laps_area->removeFlag(LV_OBJ_FLAG_CLICK_FOCUSABLE);
 
