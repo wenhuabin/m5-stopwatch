@@ -36,10 +36,13 @@ void AppStopwatch::onOpen()
     _last_lap_elapsed_ms  = 0;
     _has_lap               = false;
 
+    _last_battery_check_ms = 0;
+
     LvglLockGuard lock;
     _view = std::make_unique<view::StopwatchView>();
     _view->init(lv_screen_active());
     _view->setElapsed(0);
+    _view->setBatteryLevel(GetHAL().getBatteryLevel(), GetHAL().isBatteryCharging());
 }
 
 void AppStopwatch::onRunning()
@@ -73,6 +76,8 @@ void AppStopwatch::onRunning()
         elapsed = _elapsed_at_pause_ms;
     }
     _view->setElapsed(elapsed);
+
+    refreshBatteryIfDue();
 }
 
 void AppStopwatch::onClose()
@@ -135,4 +140,16 @@ void AppStopwatch::recordLap()
     _has_lap = true;
 
     _view->addLap(_lap_count, lap_ms, is_best, is_worst);
+}
+
+void AppStopwatch::refreshBatteryIfDue()
+{
+    constexpr uint32_t kBatteryCheckIntervalMs = 20000;
+
+    const uint32_t now = GetHAL().millis();
+    if (now - _last_battery_check_ms < kBatteryCheckIntervalMs) {
+        return;
+    }
+    _last_battery_check_ms = now;
+    _view->setBatteryLevel(GetHAL().getBatteryLevel(), GetHAL().isBatteryCharging());
 }

@@ -18,11 +18,9 @@ enum class StopwatchPhase {
     Paused,
 };
 
-// Recreates the layout of the referenced VolosStopwatch SquareLine UI on
-// our 466x466 round display: big elapsed-time readout, a three-dot
-// start/stop/reset state indicator, and a lap list with current/best/worst
-// lap stats. Brightness/sound/battery panels from the reference are
-// intentionally left out (out of scope; brightness is a global setting).
+// Vertical-stack layout: battery + title header, a RESET/START/STOP state
+// row, a full-width time readout, a one-line lap-stats row, and a
+// centered lap list underneath.
 class StopwatchView {
 public:
     void init(lv_obj_t* parent = lv_screen_active());
@@ -30,8 +28,8 @@ public:
     // Updates the big MM:SS + centiseconds readout.
     void setElapsed(uint32_t elapsedMs);
 
-    // Highlights which of the three state dots (start / stop / reset) is
-    // the next actionable one.
+    // Highlights which of RESET / START / STOP is the next actionable
+    // word in the state row.
     void setPhase(StopwatchPhase phase);
 
     // Appends one "NN   mm:ss.cc" line to the lap list, updates the
@@ -42,43 +40,31 @@ public:
     // Clears the lap list and resets current/best/worst back to defaults.
     void resetLaps();
 
+    // Updates the top-of-screen battery indicator.
+    void setBatteryLevel(uint8_t percent, bool charging);
+
 private:
     std::unique_ptr<uitk::lvgl_cpp::Container> _panel;
 
-    std::unique_ptr<uitk::lvgl_cpp::Container> _header_panel;
-    std::unique_ptr<uitk::lvgl_cpp::Label> _m5stack_label;
-    std::unique_ptr<uitk::lvgl_cpp::Container> _divider;
+    std::unique_ptr<uitk::lvgl_cpp::Bar> _battery_bar;
+    std::unique_ptr<uitk::lvgl_cpp::Container> _battery_nub;
+    std::unique_ptr<uitk::lvgl_cpp::Image> _battery_charge_icon;
+    std::unique_ptr<uitk::lvgl_cpp::Label> _battery_label;
+
+    std::unique_ptr<uitk::lvgl_cpp::Label> _title_label;
+
+    std::unique_ptr<uitk::lvgl_cpp::Label> _state_label_reset;
+    std::unique_ptr<uitk::lvgl_cpp::Label> _state_label_start;
+    std::unique_ptr<uitk::lvgl_cpp::Label> _state_label_stop;
 
     std::unique_ptr<uitk::lvgl_cpp::Container> _time_bg_panel;
     std::unique_ptr<uitk::lvgl_cpp::Label> _time_label;
     std::unique_ptr<uitk::lvgl_cpp::Label> _centis_label;
-    std::unique_ptr<uitk::lvgl_cpp::Container> _title_bg_panel;
-    std::unique_ptr<uitk::lvgl_cpp::Label> _title_label;
-    std::unique_ptr<uitk::lvgl_cpp::Label> _minutes_caption;
-    std::unique_ptr<uitk::lvgl_cpp::Label> _seconds_caption;
-    std::unique_ptr<uitk::lvgl_cpp::Label> _centis_caption;
 
-    std::unique_ptr<uitk::lvgl_cpp::Container> _state_dot_start;
-    std::unique_ptr<uitk::lvgl_cpp::Container> _state_dot_stop;
-    std::unique_ptr<uitk::lvgl_cpp::Container> _state_dot_reset;
-    std::unique_ptr<uitk::lvgl_cpp::Label> _lap_save_hint;
-    std::unique_ptr<uitk::lvgl_cpp::Label> _start_stop_hint;
-    std::unique_ptr<uitk::lvgl_cpp::Label> _reset_start_stop_hint;
+    std::unique_ptr<uitk::lvgl_cpp::Label> _current_lap_label;
+    std::unique_ptr<uitk::lvgl_cpp::Label> _best_lap_label;
+    std::unique_ptr<uitk::lvgl_cpp::Label> _worst_lap_label;
 
-    std::unique_ptr<uitk::lvgl_cpp::Container> _chip_badge_panel;
-    std::unique_ptr<uitk::lvgl_cpp::Container> _chip_badge_inner;
-    std::unique_ptr<uitk::lvgl_cpp::Label> _chip_badge_label_1;
-    std::unique_ptr<uitk::lvgl_cpp::Label> _chip_badge_label_2;
-
-    std::unique_ptr<uitk::lvgl_cpp::Container> _stats_bg_panel;
-    std::unique_ptr<uitk::lvgl_cpp::Label> _current_lap_caption;
-    std::unique_ptr<uitk::lvgl_cpp::Label> _current_lap_value;
-    std::unique_ptr<uitk::lvgl_cpp::Label> _best_lap_caption;
-    std::unique_ptr<uitk::lvgl_cpp::Label> _best_lap_value;
-    std::unique_ptr<uitk::lvgl_cpp::Label> _worst_lap_caption;
-    std::unique_ptr<uitk::lvgl_cpp::Label> _worst_lap_value;
-
-    std::unique_ptr<uitk::lvgl_cpp::Label> _laps_caption;
     std::unique_ptr<uitk::lvgl_cpp::TextArea> _laps_area;
 };
 

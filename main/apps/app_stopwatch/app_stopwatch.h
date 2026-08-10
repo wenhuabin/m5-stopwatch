@@ -25,6 +25,7 @@ private:
     void advancePhase();
     // BtnB: records a lap while running.
     void recordLap();
+    void refreshBatteryIfDue();
 
     std::unique_ptr<input::KeyManager> _key_manager;
     std::unique_ptr<view::StopwatchView> _view;
@@ -38,4 +39,6 @@ private:
     uint32_t _best_lap_ms         = 0;
     uint32_t _worst_lap_ms        = 0;
     bool _has_lap                 = false;
+
+    uint32_t _last_battery_check_ms = 0;
 };
