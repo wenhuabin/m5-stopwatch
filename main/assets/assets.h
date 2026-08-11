@@ -18,3 +18,4 @@ LV_IMG_DECLARE(icon_bat_lightning);
 LV_IMG_DECLARE(icon_moments);
 LV_IMG_DECLARE(icon_stopwatch_app);
 LV_IMG_DECLARE(icon_todo_app);
+LV_IMG_DECLARE(icon_pendulum_app);

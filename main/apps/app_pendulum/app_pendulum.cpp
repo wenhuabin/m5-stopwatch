@@ -5,6 +5,7 @@
  */
 #include "app_pendulum.h"
 
+#include <assets/assets.h>
 #include <hal/hal.h>
 #include <mooncake.h>
 #include <mooncake_log.h>
@@ -14,6 +15,7 @@ using namespace mooncake;
 AppPendulum::AppPendulum()
 {
     setAppInfo().name = "Pendulum";
+    setAppInfo().icon = (void*)&icon_pendulum_app;
 }
 
 void AppPendulum::onCreate()
