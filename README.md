@@ -14,6 +14,9 @@ ESP-IDF multi-app firmware for the M5Stack StopWatch, built on the
   (functionality and layout referenced; rebuilt on this project's
   mooncake/LVGL v9 stack rather than the original's SquareLine/LVGL v8
   Arduino sketch).
+- **Pendulum** — an interactive damped single-pendulum simulation. Drag
+  the bob to set an angle and release it to watch it swing and settle;
+  BtnA resets it back to a default angle.
 
 ## Build
 
