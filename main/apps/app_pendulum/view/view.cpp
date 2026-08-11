@@ -26,6 +26,8 @@ constexpr uint32_t _color_pivot    = 0x1A1A1A;
 constexpr uint32_t _color_rod      = 0x4A4A4A;
 constexpr uint32_t _color_bob      = 0x5865F2;
 
+constexpr double _max_drag_angle_rad = 80.0 * 3.14159265358979323846 / 180.0;
+
 }  // namespace
 
 void PendulumView::init(lv_obj_t* parent)
@@ -43,6 +45,9 @@ void PendulumView::init(lv_obj_t* parent)
     _panel->setBgColor(lv_color_hex(_color_panel_bg));
     _panel->setBgOpa(LV_OPA_COVER);
     _panel->removeFlag(LV_OBJ_FLAG_SCROLLABLE);
+    _panel->onPressed(handlePressed, this);
+    _panel->addEventCb(handlePressing, LV_EVENT_PRESSING, this);
+    _panel->onRelease(handleReleased, this);
 
     _pivot_dot = std::make_unique<Container>(_panel->get());
     _pivot_dot->setSize(_pivot_dot_size, _pivot_dot_size);
@@ -89,4 +94,58 @@ bool PendulumView::consumeReleaseRequested()
     const bool requested = _release_requested;
     _release_requested    = false;
     return requested;
+}
+
+void PendulumView::updateDragFromTouch(lv_event_t* e)
+{
+    lv_indev_t* indev = lv_event_get_indev(e);
+    if (indev == nullptr) {
+        return;
+    }
+
+    lv_point_t point;
+    lv_indev_get_point(indev, &point);
+
+    const double dx = point.x - _pivot_x;
+    const double dy = point.y - _pivot_y;
+    if (dx == 0.0 && dy == 0.0) {
+        return;
+    }
+
+    double angle = std::atan2(dx, dy);
+    if (angle > _max_drag_angle_rad) {
+        angle = _max_drag_angle_rad;
+    } else if (angle < -_max_drag_angle_rad) {
+        angle = -_max_drag_angle_rad;
+    }
+    _drag_angle_rad = angle;
+}
+
+void PendulumView::handlePressed(lv_event_t* e)
+{
+    auto* self = static_cast<PendulumView*>(lv_event_get_user_data(e));
+    if (self == nullptr) {
+        return;
+    }
+    self->_is_dragging = true;
+    self->updateDragFromTouch(e);
+}
+
+void PendulumView::handlePressing(lv_event_t* e)
+{
+    auto* self = static_cast<PendulumView*>(lv_event_get_user_data(e));
+    if (self == nullptr || !self->_is_dragging) {
+        return;
+    }
+    self->updateDragFromTouch(e);
+}
+
+void PendulumView::handleReleased(lv_event_t* e)
+{
+    auto* self = static_cast<PendulumView*>(lv_event_get_user_data(e));
+    if (self == nullptr) {
+        return;
+    }
+    self->_is_dragging       = false;
+    self->_release_requested = true;
 }
