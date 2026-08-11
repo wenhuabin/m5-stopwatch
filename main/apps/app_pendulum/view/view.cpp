@@ -16,7 +16,7 @@ constexpr int _panel_size = 466;
 
 constexpr double _pivot_x     = 233.0;
 constexpr double _pivot_y     = 100.0;
-constexpr double _rod_length  = 180.0;
+constexpr double _rod_length  = 210.0;
 constexpr int _bob_radius     = 24;
 constexpr int _pivot_dot_size = 12;
 constexpr int _rod_width      = 4;
@@ -26,7 +26,9 @@ constexpr uint32_t _color_pivot    = 0x1A1A1A;
 constexpr uint32_t _color_rod      = 0x4A4A4A;
 constexpr uint32_t _color_bob      = 0x5865F2;
 
-constexpr double _max_drag_angle_rad = 80.0 * 3.14159265358979323846 / 180.0;
+// Kept under 80 deg (was the value used at the shorter rod length) so the
+// longer rod's bob still stays inside the round display at full swing.
+constexpr double _max_drag_angle_rad = 70.0 * 3.14159265358979323846 / 180.0;
 
 }  // namespace
 
@@ -58,14 +60,20 @@ void PendulumView::init(lv_obj_t* parent)
     _pivot_dot->setPos(static_cast<int32_t>(_pivot_x) - _pivot_dot_size / 2,
                         static_cast<int32_t>(_pivot_y) - _pivot_dot_size / 2);
 
-    _rod = std::make_unique<Line>(_panel->get());
-    _rod->setPos(0, 0);
-    _rod->setSize(_panel_size, _panel_size);
-    _rod->setBgOpa(LV_OPA_TRANSP);
+    // Drawn as a thin rectangle rotated around its top-center (the pivot)
+    // rather than an lv_line: the line widget's own bounding box has to
+    // span the whole swing arc, which made its per-frame invalidation
+    // and self-sizing behave unreliably (missized bounds, a dangling
+    // points pointer, and visible flicker while swinging). A rotated
+    // rectangle only ever needs to invalidate its own small area.
+    _rod = std::make_unique<Container>(_panel->get());
+    _rod->setSize(_rod_width, static_cast<int32_t>(_rod_length));
+    _rod->setPos(static_cast<int32_t>(_pivot_x) - _rod_width / 2, static_cast<int32_t>(_pivot_y));
+    _rod->setRadius(_rod_width / 2);
     _rod->setBorderWidth(0);
-    _rod->setLineColor(lv_color_hex(_color_rod));
-    _rod->setLineWidth(_rod_width);
-    _rod->setLineRounded(true);
+    _rod->setBgColor(lv_color_hex(_color_rod));
+    _rod->setBgOpa(LV_OPA_COVER);
+    _rod->setTransformPivot(LV_PCT(50), 0);
 
     _bob = std::make_unique<Container>(_panel->get());
     _bob->setSize(_bob_radius * 2, _bob_radius * 2);
@@ -80,9 +88,11 @@ void PendulumView::setAngle(double thetaRad)
     const double bob_x = _pivot_x + _rod_length * std::sin(thetaRad);
     const double bob_y = _pivot_y + _rod_length * std::cos(thetaRad);
 
-    _rod_points[0] = {static_cast<lv_value_precise_t>(_pivot_x), static_cast<lv_value_precise_t>(_pivot_y)};
-    _rod_points[1] = {static_cast<lv_value_precise_t>(bob_x), static_cast<lv_value_precise_t>(bob_y)};
-    _rod->setPoints(_rod_points, 2);
+    // LVGL's positive transform_rotation is the opposite winding direction
+    // from this view's theta (positive theta = swung toward +x), hence
+    // the negation here.
+    constexpr double kRadToDeciDeg = 180.0 / 3.14159265358979323846 * 10.0;
+    _rod->setRotation(static_cast<int32_t>(-thetaRad * kRadToDeciDeg));
 
     _bob->setPos(static_cast<int32_t>(bob_x) - _bob_radius, static_cast<int32_t>(bob_y) - _bob_radius);
 }
