@@ -49,6 +49,10 @@ private:
     std::unique_ptr<uitk::lvgl_cpp::Line> _rod;
     std::unique_ptr<uitk::lvgl_cpp::Container> _bob;
 
+    // lv_line_set_points() stores a pointer to this array rather than
+    // copying it, so it must outlive the setAngle() call that fills it.
+    lv_point_precise_t _rod_points[2] = {};
+
     bool _is_dragging        = false;
     double _drag_angle_rad   = 0.0;
     bool _release_requested  = false;

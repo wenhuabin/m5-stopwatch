@@ -80,11 +80,9 @@ void PendulumView::setAngle(double thetaRad)
     const double bob_x = _pivot_x + _rod_length * std::sin(thetaRad);
     const double bob_y = _pivot_y + _rod_length * std::cos(thetaRad);
 
-    const lv_point_precise_t points[2] = {
-        {static_cast<lv_value_precise_t>(_pivot_x), static_cast<lv_value_precise_t>(_pivot_y)},
-        {static_cast<lv_value_precise_t>(bob_x), static_cast<lv_value_precise_t>(bob_y)},
-    };
-    _rod->setPoints(points, 2);
+    _rod_points[0] = {static_cast<lv_value_precise_t>(_pivot_x), static_cast<lv_value_precise_t>(_pivot_y)};
+    _rod_points[1] = {static_cast<lv_value_precise_t>(bob_x), static_cast<lv_value_precise_t>(bob_y)};
+    _rod->setPoints(_rod_points, 2);
 
     _bob->setPos(static_cast<int32_t>(bob_x) - _bob_radius, static_cast<int32_t>(bob_y) - _bob_radius);
 }
