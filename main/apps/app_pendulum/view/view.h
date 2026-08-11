@@ -11,9 +11,9 @@
 
 namespace view {
 
-// White panel with a bold "Pendulum" title, a fixed pivot, a rod, and a
-// draggable bob. Drag near the bob to set an angle; release to let it
-// swing under damped-pendulum physics driven by the owning AppAbility.
+// White panel with a fixed pivot, a rod, and a draggable bob. Drag near
+// the bob to set an angle; release to let it swing under damped-pendulum
+// physics driven by the owning AppAbility.
 class PendulumView {
 public:
     void init(lv_obj_t* parent = lv_screen_active());
@@ -45,7 +45,6 @@ private:
     static void handleReleased(lv_event_t* e);
 
     std::unique_ptr<uitk::lvgl_cpp::Container> _panel;
-    std::unique_ptr<uitk::lvgl_cpp::Label> _title_label;
     std::unique_ptr<uitk::lvgl_cpp::Container> _pivot_dot;
     std::unique_ptr<uitk::lvgl_cpp::Line> _rod;
     std::unique_ptr<uitk::lvgl_cpp::Container> _bob;
