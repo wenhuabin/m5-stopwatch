@@ -58,8 +58,16 @@ void AppSettings::onOpen()
         {
             "Time & Date",
             {
-                {"Set Time", [&]() {}},
-                {"Set Date", [&]() {}},
+                {"Set Time",
+                 [&]() {
+                     _destroy_menu = true;
+                     _worker       = std::make_unique<SetTimeWorker>();
+                 }},
+                {"Set Date",
+                 [&]() {
+                     _destroy_menu = true;
+                     _worker       = std::make_unique<SetDateWorker>();
+                 }},
             },
         },
         {
