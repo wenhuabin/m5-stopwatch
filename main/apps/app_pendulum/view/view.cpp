@@ -51,6 +51,10 @@ void PendulumView::init(lv_obj_t* parent)
     _panel->addEventCb(handlePressing, LV_EVENT_PRESSING, this);
     _panel->onRelease(handleReleased, this);
 
+    _clock_face = std::make_unique<ClockFace>();
+    _clock_face->init(_panel->get());
+    _clock_face->setTime(10, 10, 30);  // fixed test time, replaced with live time in Task 3
+
     _pivot_dot = std::make_unique<Container>(_panel->get());
     _pivot_dot->setSize(_pivot_dot_size, _pivot_dot_size);
     _pivot_dot->setRadius(LV_RADIUS_CIRCLE);
@@ -95,6 +99,13 @@ void PendulumView::setAngle(double thetaRad)
     _rod->setRotation(static_cast<int32_t>(-thetaRad * kRadToDeciDeg));
 
     _bob->setPos(static_cast<int32_t>(bob_x) - _bob_radius, static_cast<int32_t>(bob_y) - _bob_radius);
+}
+
+void PendulumView::setTime(uint8_t hour, uint8_t minute, uint8_t second)
+{
+    if (_clock_face) {
+        _clock_face->setTime(hour, minute, second);
+    }
 }
 
 bool PendulumView::consumeReleaseRequested()

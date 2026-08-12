@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: MIT
  */
 #pragma once
+#include "clock_face.h"
 #include <cstdint>
 #include <memory>
 #include <smooth_lvgl.hpp>
@@ -21,6 +22,9 @@ public:
     // Repositions the rod + bob for the given angle (radians, 0 = straight
     // down, positive = swung toward +x).
     void setAngle(double thetaRad);
+
+    // Forwards the current time to the clock face; no-op if called before init().
+    void setTime(uint8_t hour, uint8_t minute, uint8_t second);
 
     bool isDragging() const
     {
@@ -45,6 +49,7 @@ private:
     static void handleReleased(lv_event_t* e);
 
     std::unique_ptr<uitk::lvgl_cpp::Container> _panel;
+    std::unique_ptr<ClockFace> _clock_face;
     std::unique_ptr<uitk::lvgl_cpp::Container> _pivot_dot;
     std::unique_ptr<uitk::lvgl_cpp::Container> _rod;
     std::unique_ptr<uitk::lvgl_cpp::Container> _bob;
