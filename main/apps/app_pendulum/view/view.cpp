@@ -15,9 +15,9 @@ namespace {
 constexpr int _panel_size = 466;
 
 constexpr double _pivot_x     = 233.0;
-constexpr double _pivot_y     = 100.0;
-constexpr double _rod_length  = 210.0;
-constexpr int _bob_radius     = 24;
+constexpr double _pivot_y     = 240.0;
+constexpr double _rod_length  = 150.0;
+constexpr int _bob_radius     = 20;
 constexpr int _pivot_dot_size = 12;
 constexpr int _rod_width      = 4;
 
