@@ -71,6 +71,16 @@ void AppSettings::onOpen()
             },
         },
         {
+            "Network",
+            {
+                {"Wi-Fi",
+                 [&]() {
+                     _destroy_menu = true;
+                     _worker       = std::make_unique<WifiWorker>();
+                 }},
+            },
+        },
+        {
             "Firmware",
             {
                 {fmt::format("Version: {}", common::FirmwareVersion),

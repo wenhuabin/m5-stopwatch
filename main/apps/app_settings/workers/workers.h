@@ -7,9 +7,12 @@
 #include <smooth_lvgl.hpp>
 #include <uitk/short_namespace.hpp>
 #include <hal/hal.h>
+#include <atomic>
 #include <cstdint>
+#include <esp_wifi.h>
 #include <memory>
 #include <string_view>
+#include <vector>
 
 namespace setup_workers {
 
@@ -136,6 +139,28 @@ private:
     int _progress                = 0;
     uint32_t _next_progress_tick = 0;
     int _pending_burst_steps     = 0;
+};
+
+/**
+ * @brief
+ *
+ */
+class WifiWorker : public WorkerBase {
+public:
+    WifiWorker();
+    ~WifiWorker();
+    void update() override;
+
+private:
+    class WifiConfigView;
+
+    static void scanTaskEntry(void* param);
+    void runScanTask();
+    void startScan();
+
+    std::unique_ptr<WifiConfigView> _view;
+    std::vector<wifi_ap_record_t> _scan_results;
+    std::atomic<bool> _scan_ready{false};
 };
 
 }  // namespace setup_workers
