@@ -161,6 +161,8 @@ private:
     std::unique_ptr<WifiConfigView> _view;
     std::vector<wifi_ap_record_t> _scan_results;
     std::atomic<bool> _scan_ready{false};
+    bool _connecting             = false;
+    uint32_t _connect_started_ms = 0;
 };
 
 }  // namespace setup_workers

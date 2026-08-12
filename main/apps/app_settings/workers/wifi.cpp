@@ -5,6 +5,7 @@
  */
 #include "workers.h"
 #include <assets/assets.h>
+#include <hal/hal.h>
 #include <mooncake_log.h>
 #include <wifi_manager.h>
 #include <ssid_manager.h>
@@ -295,6 +296,21 @@ void WifiWorker::update()
         SsidManager::GetInstance().AddSsid(connect_ssid, connect_password);
         WifiManager::GetInstance().StartStation();
         _view->setStatusText(fmt::format("Connecting to {}...", connect_ssid));
+        _connecting          = true;
+        _connect_started_ms  = GetHAL().millis();
+    }
+
+    if (_connecting) {
+        constexpr uint32_t kConnectTimeoutMs = 15000;
+        const uint32_t elapsed               = GetHAL().millis() - _connect_started_ms;
+
+        if (WifiManager::GetInstance().IsConnected()) {
+            _connecting = false;
+            _view->setStatusText(fmt::format("Connected: {}", WifiManager::GetInstance().GetSsid()));
+        } else if (elapsed > kConnectTimeoutMs) {
+            _connecting = false;
+            _view->setStatusText("Failed to connect");
+        }
     }
 
     if (_view->consumeDoneRequested()) {
