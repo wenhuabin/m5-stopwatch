@@ -86,6 +86,9 @@ void AppPendulum::onRunning()
     }
 
     _view->setAngle(_theta_rad);
+
+    const TimeHms time = GetHAL().getTimeHms();
+    _view->setTime(time.hour, time.minute, time.second);
 }
 
 void AppPendulum::onClose()

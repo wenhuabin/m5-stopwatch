@@ -53,7 +53,6 @@ void PendulumView::init(lv_obj_t* parent)
 
     _clock_face = std::make_unique<ClockFace>();
     _clock_face->init(_panel->get());
-    _clock_face->setTime(10, 10, 30);  // fixed test time, replaced with live time in Task 3
 
     _pivot_dot = std::make_unique<Container>(_panel->get());
     _pivot_dot->setSize(_pivot_dot_size, _pivot_dot_size);
