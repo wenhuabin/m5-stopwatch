@@ -9,6 +9,7 @@
 #include <mooncake_log.h>
 #include <wifi_manager.h>
 #include <ssid_manager.h>
+#include <esp_wifi_default.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <cstdio>
@@ -71,9 +72,13 @@ public:
         _done_button->label().align(LV_ALIGN_CENTER, 0, 0);
         _done_button->onClick().connect([this]() { _done_requested = true; });
 
+        // Sized/positioned to sit in the round panel's wide vertical-center
+        // band rather than pinned to the bottom edge -- a full-width block
+        // anchored at the very bottom of a round display loses a lot of its
+        // outer keys to the circular bezel.
         _password_panel = std::make_unique<Container>(_panel->get());
-        _password_panel->align(LV_ALIGN_TOP_MID, 0, 100);
-        _password_panel->setSize(420, 140);
+        _password_panel->align(LV_ALIGN_TOP_MID, 0, 90);
+        _password_panel->setSize(420, 90);
         _password_panel->setRadius(0);
         _password_panel->setBorderWidth(0);
         _password_panel->setPaddingAll(0);
@@ -87,47 +92,56 @@ public:
         _password_title->setTextColor(lv_color_hex(0xFFFFFF));
 
         _password_area = std::make_unique<TextArea>(_password_panel->get());
-        _password_area->align(LV_ALIGN_TOP_MID, 0, 40);
-        _password_area->setSize(400, 60);
+        _password_area->align(LV_ALIGN_TOP_MID, 0, 30);
+        _password_area->setSize(400, 55);
         _password_area->setOneLine(true);
         _password_area->setPasswordMode(true);
         _password_area->setPlaceholderText("Password");
+        // Default cursor renders as a solid block, easy to mistake for a
+        // stray typed character that won't delete -- style it as a plain
+        // underline instead so it reads clearly as "type here".
+        lv_obj_set_style_bg_opa(_password_area->get(), LV_OPA_TRANSP, LV_PART_CURSOR);
+        lv_obj_set_style_border_side(_password_area->get(), LV_BORDER_SIDE_BOTTOM, LV_PART_CURSOR);
+        lv_obj_set_style_border_width(_password_area->get(), 2, LV_PART_CURSOR);
+        lv_obj_set_style_border_color(_password_area->get(), lv_color_hex(0xFFFFFF), LV_PART_CURSOR);
 
-        _connect_button = std::make_unique<Button>(_password_panel->get());
-        _connect_button->align(LV_ALIGN_TOP_LEFT, 20, 110);
-        _connect_button->setSize(180, 60);
-        _connect_button->setRadius(30);
+        _keyboard = lv_keyboard_create(_panel->get());
+        lv_obj_set_size(_keyboard, 380, 190);
+        lv_obj_align(_keyboard, LV_ALIGN_TOP_MID, 0, 185);
+        lv_keyboard_set_textarea(_keyboard, _password_area->get());
+        lv_obj_add_flag(_keyboard, LV_OBJ_FLAG_HIDDEN);
+
+        _connect_button = std::make_unique<Button>(_panel->get());
+        _connect_button->align(LV_ALIGN_TOP_MID, -60, 385);
+        _connect_button->setSize(110, 45);
+        _connect_button->setRadius(22);
         _connect_button->setBorderWidth(0);
         _connect_button->setShadowWidth(0);
         _connect_button->setBgColor(lv_color_hex(0x4AD78C));
         _connect_button->label().setText("Connect");
-        _connect_button->label().setTextFont(&lv_font_montserrat_20);
+        _connect_button->label().setTextFont(&lv_font_montserrat_16);
         _connect_button->label().setTextColor(lv_color_hex(0x0F5831));
         _connect_button->label().align(LV_ALIGN_CENTER, 0, 0);
+        _connect_button->setHidden(true);
         _connect_button->onClick().connect([this]() {
             _connect_password = lv_textarea_get_text(_password_area->get());
             _connect_requested = true;
             showNetworkList();
         });
 
-        _cancel_button = std::make_unique<Button>(_password_panel->get());
-        _cancel_button->align(LV_ALIGN_TOP_RIGHT, -20, 110);
-        _cancel_button->setSize(180, 60);
-        _cancel_button->setRadius(30);
+        _cancel_button = std::make_unique<Button>(_panel->get());
+        _cancel_button->align(LV_ALIGN_TOP_MID, 60, 385);
+        _cancel_button->setSize(110, 45);
+        _cancel_button->setRadius(22);
         _cancel_button->setBorderWidth(0);
         _cancel_button->setShadowWidth(0);
         _cancel_button->setBgColor(lv_color_hex(0x4C4C4C));
         _cancel_button->label().setText("Cancel");
-        _cancel_button->label().setTextFont(&lv_font_montserrat_20);
+        _cancel_button->label().setTextFont(&lv_font_montserrat_16);
         _cancel_button->label().setTextColor(lv_color_hex(0xFFFFFF));
         _cancel_button->label().align(LV_ALIGN_CENTER, 0, 0);
+        _cancel_button->setHidden(true);
         _cancel_button->onClick().connect([this]() { showNetworkList(); });
-
-        _keyboard = lv_keyboard_create(_panel->get());
-        lv_obj_set_size(_keyboard, 466, 200);
-        lv_obj_align(_keyboard, LV_ALIGN_BOTTOM_MID, 0, 0);
-        lv_keyboard_set_textarea(_keyboard, _password_area->get());
-        lv_obj_add_flag(_keyboard, LV_OBJ_FLAG_HIDDEN);
     }
 
     void showNetworkList()
@@ -135,6 +149,8 @@ public:
         _list_panel->setHidden(false);
         _done_button->setHidden(false);
         _password_panel->setHidden(true);
+        _connect_button->setHidden(true);
+        _cancel_button->setHidden(true);
         lv_obj_add_flag(_keyboard, LV_OBJ_FLAG_HIDDEN);
     }
 
@@ -146,6 +162,8 @@ public:
         _list_panel->setHidden(true);
         _done_button->setHidden(true);
         _password_panel->setHidden(false);
+        _connect_button->setHidden(false);
+        _cancel_button->setHidden(false);
         lv_obj_remove_flag(_keyboard, LV_OBJ_FLAG_HIDDEN);
     }
 
@@ -238,12 +256,41 @@ WifiWorker::WifiWorker()
 {
     mclog::tagInfo(_tag, "start wifi worker");
 
+    // WifiManager's own WifiStation runs a background reconnect-scan whose
+    // event handler unconditionally consumes whatever scan just completed
+    // (esp_wifi_scan_get_ap_records() frees the result list after reading,
+    // confirmed via the ESP-IDF header) -- it was racing our own scan and
+    // winning, leaving us with zero results every time. Stop it and take
+    // raw exclusive control of the WiFi driver for as long as this screen
+    // is open; releaseWifiControl() hands it back.
+    WifiManager::GetInstance().StopStation();
+    _sta_netif = esp_netif_create_default_wifi_sta();
+    esp_wifi_set_mode(WIFI_MODE_STA);
+    esp_wifi_start();
+    _owns_wifi = true;
+
     _view = std::make_unique<WifiConfigView>();
     startScan();
 }
 
 WifiWorker::~WifiWorker()
 {
+    releaseWifiControl();
+}
+
+void WifiWorker::releaseWifiControl()
+{
+    if (!_owns_wifi) {
+        return;
+    }
+    _owns_wifi = false;
+
+    esp_wifi_stop();
+    if (_sta_netif) {
+        esp_netif_destroy_default_wifi(_sta_netif);
+        _sta_netif = nullptr;
+    }
+    WifiManager::GetInstance().StartStation();
 }
 
 void WifiWorker::startScan()
@@ -261,7 +308,10 @@ void WifiWorker::scanTaskEntry(void* param)
 
 void WifiWorker::runScanTask()
 {
-    esp_wifi_scan_start(nullptr, true);
+    const esp_err_t scan_err = esp_wifi_scan_start(nullptr, true);
+    if (scan_err != ESP_OK) {
+        mclog::tagWarn(_tag, "esp_wifi_scan_start failed: {}", esp_err_to_name(scan_err));
+    }
 
     uint16_t ap_count = 0;
     esp_wifi_scan_get_ap_num(&ap_count);
@@ -294,7 +344,7 @@ void WifiWorker::update()
     if (_view->consumeConnectRequested(connect_ssid, connect_password)) {
         mclog::tagInfo(_tag, "connecting to {}", connect_ssid);
         SsidManager::GetInstance().AddSsid(connect_ssid, connect_password);
-        WifiManager::GetInstance().StartStation();
+        releaseWifiControl();
         _view->setStatusText(fmt::format("Connecting to {}...", connect_ssid));
         _connecting          = true;
         _connect_started_ms  = GetHAL().millis();

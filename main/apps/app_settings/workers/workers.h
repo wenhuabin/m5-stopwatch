@@ -157,10 +157,13 @@ private:
     static void scanTaskEntry(void* param);
     void runScanTask();
     void startScan();
+    void releaseWifiControl();
 
     std::unique_ptr<WifiConfigView> _view;
     std::vector<wifi_ap_record_t> _scan_results;
     std::atomic<bool> _scan_ready{false};
+    esp_netif_t* _sta_netif = nullptr;
+    bool _owns_wifi              = false;
     bool _connecting             = false;
     uint32_t _connect_started_ms = 0;
 };
