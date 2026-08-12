@@ -11,6 +11,7 @@
 #include <hal/hal.h>
 #include <lv_demos.h>
 #include <apps/common/audio/audio.h>
+#include <wifi_manager.h>
 
 using namespace mooncake;
 using namespace smooth_ui_toolkit;
@@ -23,6 +24,11 @@ extern "C" void app_main(void)
 
     // HAL init
     GetHAL().init();
+
+    // WiFi (station mode, auto-reconnect using any previously configured
+    // network; Settings -> Network -> Wi-Fi lets the user add one)
+    WifiManager::GetInstance().Initialize();
+    WifiManager::GetInstance().StartStation();
 
     // Setup ui hal
     ui_hal::on_delay([](uint32_t ms) { GetHAL().delay(ms); });
