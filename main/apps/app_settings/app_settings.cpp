@@ -38,9 +38,21 @@ void AppSettings::onOpen()
         {
             "Device",
             {
-                {"Brightness", [&]() {}},
-                {"Volume", [&]() {}},
-                {"Button", [&]() {}},
+                {"Brightness",
+                 [&]() {
+                     _destroy_menu = true;
+                     _worker       = std::make_unique<BrightnessWorker>();
+                 }},
+                {"Volume",
+                 [&]() {
+                     _destroy_menu = true;
+                     _worker       = std::make_unique<VolumeWorker>();
+                 }},
+                {"Button",
+                 [&]() {
+                     _destroy_menu = true;
+                     _worker       = std::make_unique<ButtonWorker>();
+                 }},
             },
         },
         {
