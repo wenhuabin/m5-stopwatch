@@ -25,11 +25,11 @@ constexpr uint32_t _color_panel_bg  = 0xFFFFFF;
 constexpr uint32_t _color_pivot     = 0x1A1A1A;
 constexpr uint32_t _color_rod       = 0x5A5A5A;
 constexpr uint32_t _color_rod_edge  = 0x2A2A2A;
-// Brass-medallion look for the bob: a dark rim, a lighter gold fill, and a
+// Blue medallion look for the bob: a darker rim, a lighter blue fill, and a
 // small off-center highlight for a bit of a 3D/metallic feel.
-constexpr uint32_t _color_bob_rim   = 0xB8860B;
-constexpr uint32_t _color_bob_fill  = 0xDAA520;
-constexpr uint32_t _color_bob_shine = 0xFFF3D6;
+constexpr uint32_t _color_bob_rim   = 0x3B4BC4;
+constexpr uint32_t _color_bob_fill  = 0x5865F2;
+constexpr uint32_t _color_bob_shine = 0xE0E6FF;
 constexpr int _bob_fill_inset  = 4;
 constexpr int _bob_shine_size  = 7;
 constexpr int _bob_shine_dx    = -7;
