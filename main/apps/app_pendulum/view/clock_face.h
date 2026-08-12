@@ -22,6 +22,7 @@ public:
     void setTime(uint8_t hour, uint8_t minute, uint8_t second);
 
 private:
+    std::unique_ptr<uitk::lvgl_cpp::Container> _bezel;
     std::unique_ptr<uitk::lvgl_cpp::Container> _face;
     std::unique_ptr<uitk::lvgl_cpp::Container> _pivot_dot;
     std::vector<std::unique_ptr<uitk::lvgl_cpp::Label>> _numeral_labels;

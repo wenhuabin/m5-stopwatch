@@ -14,8 +14,9 @@ using namespace uitk::lvgl_cpp;
 namespace {
 
 constexpr double _center_x   = 233.0;
-constexpr double _center_y   = 100.0;
+constexpr double _center_y   = 120.0;
 constexpr int _face_radius   = 90;
+constexpr int _bezel_thickness    = 8;
 constexpr int _numeral_radius     = 72;
 constexpr int _tick_inner_radius  = 78;
 constexpr int _tick_outer_radius  = 88;
@@ -24,6 +25,10 @@ constexpr int _tick_dot_size      = 4;
 
 constexpr uint32_t _color_face_bg    = 0xFFFFFF;
 constexpr uint32_t _color_border     = 0x1A1A1A;
+// Brass case bezel and pivot, matching the pendulum bob's palette for a
+// bit of tactile depth/cohesion rather than a flat white disc.
+constexpr uint32_t _color_bezel      = 0x8B6914;
+constexpr uint32_t _color_pivot      = 0xB8860B;
 constexpr uint32_t _color_numeral    = 0x1A1A1A;
 constexpr uint32_t _color_tick       = 0x9E9E9E;
 constexpr uint32_t _color_hour_hand   = 0x1A1A1A;
@@ -59,6 +64,24 @@ std::unique_ptr<Container> makeHand(lv_obj_t* parent, int length, int width, uin
 
 void ClockFace::init(lv_obj_t* parent)
 {
+    // Brass case bezel, drawn behind (and slightly larger than) the white
+    // face so it shows as a raised metal ring; a soft shadow gives it a
+    // bit of depth against the panel.
+    const int bezel_radius = _face_radius + _bezel_thickness;
+    _bezel = std::make_unique<Container>(parent);
+    _bezel->setSize(bezel_radius * 2, bezel_radius * 2);
+    _bezel->setPos(static_cast<int32_t>(_center_x) - bezel_radius, static_cast<int32_t>(_center_y) - bezel_radius);
+    _bezel->setRadius(LV_RADIUS_CIRCLE);
+    _bezel->setBorderWidth(0);
+    _bezel->setBgColor(lv_color_hex(_color_bezel));
+    _bezel->setBgOpa(LV_OPA_COVER);
+    _bezel->setShadowWidth(14);
+    _bezel->setShadowOffsetY(5);
+    _bezel->setShadowColor(lv_color_hex(0x000000));
+    _bezel->setShadowOpa(70);
+    _bezel->removeFlag(LV_OBJ_FLAG_SCROLLABLE);
+    _bezel->removeFlag(LV_OBJ_FLAG_CLICKABLE);
+
     _face = std::make_unique<Container>(parent);
     _face->setSize(_face_radius * 2, _face_radius * 2);
     _face->setPos(static_cast<int32_t>(_center_x) - _face_radius, static_cast<int32_t>(_center_y) - _face_radius);
@@ -101,7 +124,7 @@ void ClockFace::init(lv_obj_t* parent)
     _pivot_dot->setSize(_pivot_dot_size, _pivot_dot_size);
     _pivot_dot->setRadius(LV_RADIUS_CIRCLE);
     _pivot_dot->setBorderWidth(0);
-    _pivot_dot->setBgColor(lv_color_hex(_color_border));
+    _pivot_dot->setBgColor(lv_color_hex(_color_pivot));
     _pivot_dot->setBgOpa(LV_OPA_COVER);
     _pivot_dot->setPos(static_cast<int32_t>(_center_x) - _pivot_dot_size / 2,
                         static_cast<int32_t>(_center_y) - _pivot_dot_size / 2);

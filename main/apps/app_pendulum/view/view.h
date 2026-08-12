@@ -52,7 +52,9 @@ private:
     std::unique_ptr<ClockFace> _clock_face;
     std::unique_ptr<uitk::lvgl_cpp::Container> _pivot_dot;
     std::unique_ptr<uitk::lvgl_cpp::Container> _rod;
-    std::unique_ptr<uitk::lvgl_cpp::Container> _bob;
+    std::unique_ptr<uitk::lvgl_cpp::Container> _bob_rim;
+    std::unique_ptr<uitk::lvgl_cpp::Container> _bob_fill;
+    std::unique_ptr<uitk::lvgl_cpp::Container> _bob_shine;
 
     bool _is_dragging        = false;
     double _drag_angle_rad   = 0.0;

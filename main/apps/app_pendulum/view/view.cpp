@@ -21,10 +21,19 @@ constexpr int _bob_radius     = 20;
 constexpr int _pivot_dot_size = 12;
 constexpr int _rod_width      = 4;
 
-constexpr uint32_t _color_panel_bg = 0xFFFFFF;
-constexpr uint32_t _color_pivot    = 0x1A1A1A;
-constexpr uint32_t _color_rod      = 0x4A4A4A;
-constexpr uint32_t _color_bob      = 0x5865F2;
+constexpr uint32_t _color_panel_bg  = 0xFFFFFF;
+constexpr uint32_t _color_pivot     = 0x1A1A1A;
+constexpr uint32_t _color_rod       = 0x5A5A5A;
+constexpr uint32_t _color_rod_edge  = 0x2A2A2A;
+// Brass-medallion look for the bob: a dark rim, a lighter gold fill, and a
+// small off-center highlight for a bit of a 3D/metallic feel.
+constexpr uint32_t _color_bob_rim   = 0xB8860B;
+constexpr uint32_t _color_bob_fill  = 0xDAA520;
+constexpr uint32_t _color_bob_shine = 0xFFF3D6;
+constexpr int _bob_fill_inset  = 4;
+constexpr int _bob_shine_size  = 7;
+constexpr int _bob_shine_dx    = -7;
+constexpr int _bob_shine_dy    = -7;
 
 // Kept under 80 deg (was the value used at the shorter rod length) so the
 // longer rod's bob still stays inside the round display at full swing.
@@ -73,17 +82,37 @@ void PendulumView::init(lv_obj_t* parent)
     _rod->setSize(_rod_width, static_cast<int32_t>(_rod_length));
     _rod->setPos(static_cast<int32_t>(_pivot_x) - _rod_width / 2, static_cast<int32_t>(_pivot_y));
     _rod->setRadius(_rod_width / 2);
-    _rod->setBorderWidth(0);
+    _rod->setBorderWidth(1);
+    _rod->setBorderColor(lv_color_hex(_color_rod_edge));
     _rod->setBgColor(lv_color_hex(_color_rod));
     _rod->setBgOpa(LV_OPA_COVER);
     _rod->setTransformPivot(LV_PCT(50), 0);
 
-    _bob = std::make_unique<Container>(_panel->get());
-    _bob->setSize(_bob_radius * 2, _bob_radius * 2);
-    _bob->setRadius(LV_RADIUS_CIRCLE);
-    _bob->setBorderWidth(0);
-    _bob->setBgColor(lv_color_hex(_color_bob));
-    _bob->setBgOpa(LV_OPA_COVER);
+    // Brass-medallion bob: dark rim, lighter gold fill, small highlight.
+    _bob_rim = std::make_unique<Container>(_panel->get());
+    _bob_rim->setSize(_bob_radius * 2, _bob_radius * 2);
+    _bob_rim->setRadius(LV_RADIUS_CIRCLE);
+    _bob_rim->setBorderWidth(0);
+    _bob_rim->setBgColor(lv_color_hex(_color_bob_rim));
+    _bob_rim->setBgOpa(LV_OPA_COVER);
+    _bob_rim->setShadowWidth(10);
+    _bob_rim->setShadowOffsetY(4);
+    _bob_rim->setShadowColor(lv_color_hex(0x000000));
+    _bob_rim->setShadowOpa(70);
+
+    _bob_fill = std::make_unique<Container>(_panel->get());
+    _bob_fill->setSize((_bob_radius - _bob_fill_inset) * 2, (_bob_radius - _bob_fill_inset) * 2);
+    _bob_fill->setRadius(LV_RADIUS_CIRCLE);
+    _bob_fill->setBorderWidth(0);
+    _bob_fill->setBgColor(lv_color_hex(_color_bob_fill));
+    _bob_fill->setBgOpa(LV_OPA_COVER);
+
+    _bob_shine = std::make_unique<Container>(_panel->get());
+    _bob_shine->setSize(_bob_shine_size, _bob_shine_size);
+    _bob_shine->setRadius(LV_RADIUS_CIRCLE);
+    _bob_shine->setBorderWidth(0);
+    _bob_shine->setBgColor(lv_color_hex(_color_bob_shine));
+    _bob_shine->setBgOpa(LV_OPA_COVER);
 }
 
 void PendulumView::setAngle(double thetaRad)
@@ -97,7 +126,11 @@ void PendulumView::setAngle(double thetaRad)
     constexpr double kRadToDeciDeg = 180.0 / 3.14159265358979323846 * 10.0;
     _rod->setRotation(static_cast<int32_t>(-thetaRad * kRadToDeciDeg));
 
-    _bob->setPos(static_cast<int32_t>(bob_x) - _bob_radius, static_cast<int32_t>(bob_y) - _bob_radius);
+    const int32_t bob_xi = static_cast<int32_t>(bob_x);
+    const int32_t bob_yi = static_cast<int32_t>(bob_y);
+    _bob_rim->setPos(bob_xi - _bob_radius, bob_yi - _bob_radius);
+    _bob_fill->setPos(bob_xi - (_bob_radius - _bob_fill_inset), bob_yi - (_bob_radius - _bob_fill_inset));
+    _bob_shine->setPos(bob_xi + _bob_shine_dx, bob_yi + _bob_shine_dy);
 }
 
 void PendulumView::setTime(uint8_t hour, uint8_t minute, uint8_t second)
