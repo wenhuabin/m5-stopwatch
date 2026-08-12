@@ -10,3 +10,4 @@
 #include "app_stopwatch/app_stopwatch.h"
 #include "app_todo/app_todo.h"
 #include "app_pendulum/app_pendulum.h"
+#include "app_settings/app_settings.h"

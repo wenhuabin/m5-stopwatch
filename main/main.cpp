@@ -34,6 +34,7 @@ extern "C" void app_main(void)
     GetMooncake().installApp(std::make_unique<AppStopwatch>());
     GetMooncake().installApp(std::make_unique<AppTodo>());
     GetMooncake().installApp(std::make_unique<AppPendulum>());
+    GetMooncake().installApp(std::make_unique<AppSettings>());
     // GetMooncake().installApp(std::make_unique<AppTemplate>());
 
     // Main loop
