@@ -14,26 +14,37 @@ namespace {
 
 constexpr int _panel_size = 466;
 
-constexpr double _pivot_x     = 233.0;
-constexpr double _pivot_y     = 240.0;
-constexpr double _rod_length  = 150.0;
-constexpr int _bob_radius     = 20;
-constexpr int _pivot_dot_size = 12;
-constexpr int _rod_width      = 4;
+// Wall-clock case (navy rounded rect + a narrower "cap" band inset at its
+// top), sized/positioned so every rounded corner clears the round
+// 233px-radius bezel with margin: worst-case corner-arc-center distance
+// from panel center (233,233) plus the corner radius is ~227.0px, 6px under
+// the 233px bezel radius.
+constexpr double _case_cx      = 233.0;
+constexpr double _case_cy      = 230.0;
+constexpr int _case_w          = 260;
+constexpr int _case_h          = 390;
+constexpr int _case_radius     = 26;
+constexpr int _case_cap_h      = 22;
+constexpr int _case_cap_inset  = 10;  // narrower than the case on each side
+constexpr int _case_cap_radius = 8;
 
-constexpr uint32_t _color_panel_bg  = 0xFFFFFF;
+constexpr double _pivot_x     = 233.0;
+constexpr double _pivot_y     = 283.0;
+constexpr double _rod_length  = 93.0;
+constexpr int _bob_radius     = 22;
+constexpr int _pivot_dot_size = 10;
+constexpr int _rod_width      = 3;
+
+constexpr uint32_t _color_panel_bg = 0xEDEDED;  // backdrop outside the case
+constexpr uint32_t _color_case_body = 0x3F5872;
+constexpr uint32_t _color_case_cap  = 0x33475C;
 constexpr uint32_t _color_pivot     = 0x1A1A1A;
-constexpr uint32_t _color_rod       = 0x5A5A5A;
-constexpr uint32_t _color_rod_edge  = 0x2A2A2A;
-// Blue medallion look for the bob: a darker rim, a lighter blue fill, and a
-// small off-center highlight for a bit of a 3D/metallic feel.
-constexpr uint32_t _color_bob_rim   = 0x3B4BC4;
-constexpr uint32_t _color_bob_fill  = 0x5865F2;
-constexpr uint32_t _color_bob_shine = 0xE0E6FF;
-constexpr int _bob_fill_inset  = 4;
-constexpr int _bob_shine_size  = 7;
-constexpr int _bob_shine_dx    = -7;
-constexpr int _bob_shine_dy    = -7;
+constexpr uint32_t _color_rod       = 0xD8D8D8;
+constexpr uint32_t _color_rod_edge  = 0xBFBFBF;
+// Flat tan/gold bob: a single fill with a slightly darker edge and a soft
+// drop shadow for grounding, rather than the earlier rim/fill/shine stack.
+constexpr uint32_t _color_bob_fill = 0xD9AF6C;
+constexpr uint32_t _color_bob_edge = 0xB98E4E;
 
 // Kept under 80 deg (was the value used at the shorter rod length) so the
 // longer rod's bob still stays inside the round display at full swing.
@@ -59,6 +70,36 @@ void PendulumView::init(lv_obj_t* parent)
     _panel->onPressed(handlePressed, this);
     _panel->addEventCb(handlePressing, LV_EVENT_PRESSING, this);
     _panel->onRelease(handleReleased, this);
+
+    _case_body = std::make_unique<Container>(_panel->get());
+    _case_body->setSize(_case_w, _case_h);
+    _case_body->setPos(static_cast<int32_t>(_case_cx - _case_w / 2.0), static_cast<int32_t>(_case_cy - _case_h / 2.0));
+    _case_body->setRadius(_case_radius);
+    _case_body->setBorderWidth(0);
+    _case_body->setBgColor(lv_color_hex(_color_case_body));
+    _case_body->setBgOpa(LV_OPA_COVER);
+    _case_body->setShadowWidth(16);
+    _case_body->setShadowOffsetY(6);
+    _case_body->setShadowColor(lv_color_hex(0x000000));
+    _case_body->setShadowOpa(60);
+    _case_body->removeFlag(LV_OBJ_FLAG_SCROLLABLE);
+    _case_body->removeFlag(LV_OBJ_FLAG_CLICKABLE);
+
+    // A narrower, slightly darker band inset at the case's own top, standing
+    // in for the reference image's overhanging cap/pediment: an overhanging
+    // piece wide enough to read as a cap would have corners that fall
+    // outside the round bezel this close to its top edge, so this band
+    // stays inside the already-verified case footprint instead.
+    const int case_top = static_cast<int32_t>(_case_cy - _case_h / 2.0);
+    _case_cap = std::make_unique<Container>(_panel->get());
+    _case_cap->setSize(_case_w - _case_cap_inset * 2, _case_cap_h);
+    _case_cap->setPos(static_cast<int32_t>(_case_cx - (_case_w - _case_cap_inset * 2) / 2.0), case_top);
+    _case_cap->setRadius(_case_cap_radius);
+    _case_cap->setBorderWidth(0);
+    _case_cap->setBgColor(lv_color_hex(_color_case_cap));
+    _case_cap->setBgOpa(LV_OPA_COVER);
+    _case_cap->removeFlag(LV_OBJ_FLAG_SCROLLABLE);
+    _case_cap->removeFlag(LV_OBJ_FLAG_CLICKABLE);
 
     _clock_face = std::make_unique<ClockFace>();
     _clock_face->init(_panel->get());
@@ -88,31 +129,19 @@ void PendulumView::init(lv_obj_t* parent)
     _rod->setBgOpa(LV_OPA_COVER);
     _rod->setTransformPivot(LV_PCT(50), 0);
 
-    // Brass-medallion bob: dark rim, lighter gold fill, small highlight.
-    _bob_rim = std::make_unique<Container>(_panel->get());
-    _bob_rim->setSize(_bob_radius * 2, _bob_radius * 2);
-    _bob_rim->setRadius(LV_RADIUS_CIRCLE);
-    _bob_rim->setBorderWidth(0);
-    _bob_rim->setBgColor(lv_color_hex(_color_bob_rim));
-    _bob_rim->setBgOpa(LV_OPA_COVER);
-    _bob_rim->setShadowWidth(10);
-    _bob_rim->setShadowOffsetY(4);
-    _bob_rim->setShadowColor(lv_color_hex(0x000000));
-    _bob_rim->setShadowOpa(70);
-
-    _bob_fill = std::make_unique<Container>(_panel->get());
-    _bob_fill->setSize((_bob_radius - _bob_fill_inset) * 2, (_bob_radius - _bob_fill_inset) * 2);
-    _bob_fill->setRadius(LV_RADIUS_CIRCLE);
-    _bob_fill->setBorderWidth(0);
-    _bob_fill->setBgColor(lv_color_hex(_color_bob_fill));
-    _bob_fill->setBgOpa(LV_OPA_COVER);
-
-    _bob_shine = std::make_unique<Container>(_panel->get());
-    _bob_shine->setSize(_bob_shine_size, _bob_shine_size);
-    _bob_shine->setRadius(LV_RADIUS_CIRCLE);
-    _bob_shine->setBorderWidth(0);
-    _bob_shine->setBgColor(lv_color_hex(_color_bob_shine));
-    _bob_shine->setBgOpa(LV_OPA_COVER);
+    // Flat tan/gold bob: single fill, a slightly darker edge, and a soft
+    // drop shadow for grounding.
+    _bob = std::make_unique<Container>(_panel->get());
+    _bob->setSize(_bob_radius * 2, _bob_radius * 2);
+    _bob->setRadius(LV_RADIUS_CIRCLE);
+    _bob->setBorderWidth(2);
+    _bob->setBorderColor(lv_color_hex(_color_bob_edge));
+    _bob->setBgColor(lv_color_hex(_color_bob_fill));
+    _bob->setBgOpa(LV_OPA_COVER);
+    _bob->setShadowWidth(10);
+    _bob->setShadowOffsetY(4);
+    _bob->setShadowColor(lv_color_hex(0x000000));
+    _bob->setShadowOpa(70);
 }
 
 void PendulumView::setAngle(double thetaRad)
@@ -128,9 +157,7 @@ void PendulumView::setAngle(double thetaRad)
 
     const int32_t bob_xi = static_cast<int32_t>(bob_x);
     const int32_t bob_yi = static_cast<int32_t>(bob_y);
-    _bob_rim->setPos(bob_xi - _bob_radius, bob_yi - _bob_radius);
-    _bob_fill->setPos(bob_xi - (_bob_radius - _bob_fill_inset), bob_yi - (_bob_radius - _bob_fill_inset));
-    _bob_shine->setPos(bob_xi + _bob_shine_dx, bob_yi + _bob_shine_dy);
+    _bob->setPos(bob_xi - _bob_radius, bob_yi - _bob_radius);
 }
 
 void PendulumView::setTime(uint8_t hour, uint8_t minute, uint8_t second)

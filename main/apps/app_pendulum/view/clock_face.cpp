@@ -14,32 +14,36 @@ using namespace uitk::lvgl_cpp;
 namespace {
 
 constexpr double _center_x   = 233.0;
-constexpr double _center_y   = 120.0;
-constexpr int _face_radius   = 90;
-constexpr int _bezel_thickness    = 8;
-constexpr int _numeral_radius     = 72;
-constexpr int _tick_inner_radius  = 78;
-constexpr int _tick_outer_radius  = 88;
+constexpr double _center_y   = 165.0;
+// The panel is a 466x466 square Container, so its own center (used by
+// LV_ALIGN_CENTER offsets below) is fixed at half its size regardless of
+// where the dial itself is centered.
+constexpr double _panel_center_y  = 233.0;
+constexpr int _face_radius   = 86;
+constexpr int _bezel_thickness    = 14;
+constexpr int _numeral_radius     = 68;
+constexpr int _tick_inner_radius  = 74;
+constexpr int _tick_outer_radius  = 84;
 constexpr int _pivot_dot_size     = 8;
-constexpr int _tick_dot_size      = 4;
+constexpr int _tick_width         = 3;
 
-constexpr uint32_t _color_face_bg    = 0xFFFFFF;
-constexpr uint32_t _color_border     = 0x1A1A1A;
-// Brass case bezel and pivot, matching the pendulum bob's palette for a
-// bit of tactile depth/cohesion rather than a flat white disc.
-constexpr uint32_t _color_bezel      = 0x8B6914;
-constexpr uint32_t _color_pivot      = 0xB8860B;
-constexpr uint32_t _color_numeral    = 0x1A1A1A;
-constexpr uint32_t _color_tick       = 0x9E9E9E;
-constexpr uint32_t _color_hour_hand   = 0x1A1A1A;
-constexpr uint32_t _color_minute_hand = 0x1A1A1A;
-constexpr uint32_t _color_second_hand = 0x5865F2;
+constexpr uint32_t _color_face_bg    = 0xF1E4C2;  // cream dial
+constexpr uint32_t _color_border     = 0x1F2E3D;  // dark navy dial rim
+// Lighter blue-gray face surround, matching the case body's family rather
+// than the earlier brass medallion look.
+constexpr uint32_t _color_bezel      = 0x7189A0;
+constexpr uint32_t _color_pivot      = 0xB5342B;  // red center dot
+constexpr uint32_t _color_numeral    = 0x1F2E3D;
+constexpr uint32_t _color_tick       = 0x1F2E3D;
+constexpr uint32_t _color_hour_hand   = 0xB5342B;
+constexpr uint32_t _color_minute_hand = 0xB5342B;
+constexpr uint32_t _color_second_hand = 0xB5342B;
 
-constexpr int _hour_hand_length   = 35;
+constexpr int _hour_hand_length   = 33;
 constexpr int _hour_hand_width    = 5;
-constexpr int _minute_hand_length = 55;
+constexpr int _minute_hand_length = 53;
 constexpr int _minute_hand_width  = 4;
-constexpr int _second_hand_length = 65;
+constexpr int _second_hand_length = 62;
 constexpr int _second_hand_width  = 2;
 
 constexpr double kPi = 3.14159265358979323846;
@@ -64,9 +68,9 @@ std::unique_ptr<Container> makeHand(lv_obj_t* parent, int length, int width, uin
 
 void ClockFace::init(lv_obj_t* parent)
 {
-    // Brass case bezel, drawn behind (and slightly larger than) the white
-    // face so it shows as a raised metal ring; a soft shadow gives it a
-    // bit of depth against the panel.
+    // Lighter blue-gray face surround, drawn behind (and slightly larger
+    // than) the cream face so it shows as a raised ring; a soft shadow
+    // gives it a bit of depth against the case.
     const int bezel_radius = _face_radius + _bezel_thickness;
     _bezel = std::make_unique<Container>(parent);
     _bezel->setSize(bezel_radius * 2, bezel_radius * 2);
@@ -96,16 +100,25 @@ void ClockFace::init(lv_obj_t* parent)
     for (int h = 0; h < 12; ++h) {
         const double angle = h * 30.0 * kPi / 180.0;
 
+        // A thin rectangle, positioned so its own center sits at the tick's
+        // midpoint radius and then rotated around that same center: since
+        // the position is already along the angle from the dial's center,
+        // rotating the (initially vertical) rectangle by that same angle
+        // aligns it with the radial direction -- no off-center pivot needed.
+        const double tick_len   = _tick_outer_radius - _tick_inner_radius;
+        const double mid_radius = (_tick_inner_radius + _tick_outer_radius) / 2.0;
         auto tick = std::make_unique<Container>(parent);
-        tick->setSize(_tick_dot_size, _tick_dot_size);
-        tick->setRadius(LV_RADIUS_CIRCLE);
+        tick->setSize(_tick_width, static_cast<int32_t>(tick_len));
+        tick->setRadius(_tick_width / 2);
         tick->setBorderWidth(0);
         tick->setBgColor(lv_color_hex(_color_tick));
         tick->setBgOpa(LV_OPA_COVER);
-        const double tick_x = _center_x + _tick_outer_radius * std::sin(angle);
-        const double tick_y = _center_y - _tick_outer_radius * std::cos(angle);
-        tick->setPos(static_cast<int32_t>(tick_x) - _tick_dot_size / 2,
-                     static_cast<int32_t>(tick_y) - _tick_dot_size / 2);
+        const double tick_cx = _center_x + mid_radius * std::sin(angle);
+        const double tick_cy = _center_y - mid_radius * std::cos(angle);
+        tick->setPos(static_cast<int32_t>(tick_cx) - _tick_width / 2,
+                     static_cast<int32_t>(tick_cy) - static_cast<int32_t>(tick_len) / 2);
+        tick->setTransformPivot(LV_PCT(50), LV_PCT(50));
+        tick->setRotation(static_cast<int32_t>(angle * 180.0 / kPi * 10.0));
         _tick_marks.push_back(std::move(tick));
 
         const int numeral = (h == 0) ? 12 : h;
@@ -116,7 +129,7 @@ void ClockFace::init(lv_obj_t* parent)
         const double num_x = _center_x + _numeral_radius * std::sin(angle);
         const double num_y = _center_y - _numeral_radius * std::cos(angle);
         label->align(LV_ALIGN_CENTER, static_cast<int32_t>(num_x - _center_x),
-                     static_cast<int32_t>(num_y - 233.0));
+                     static_cast<int32_t>(num_y - _panel_center_y));
         _numeral_labels.push_back(std::move(label));
     }
 

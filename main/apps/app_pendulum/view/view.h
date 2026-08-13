@@ -12,9 +12,9 @@
 
 namespace view {
 
-// White panel with a fixed pivot, a rod, and a draggable bob. Drag near
-// the bob to set an angle; release to let it swing under damped-pendulum
-// physics driven by the owning AppAbility.
+// Wall-clock panel (case + dial) with a fixed pivot, a rod, and a
+// draggable bob. Drag near the bob to set an angle; release to let it
+// swing under damped-pendulum physics driven by the owning AppAbility.
 class PendulumView {
 public:
     void init(lv_obj_t* parent = lv_screen_active());
@@ -49,12 +49,12 @@ private:
     static void handleReleased(lv_event_t* e);
 
     std::unique_ptr<uitk::lvgl_cpp::Container> _panel;
+    std::unique_ptr<uitk::lvgl_cpp::Container> _case_body;
+    std::unique_ptr<uitk::lvgl_cpp::Container> _case_cap;
     std::unique_ptr<ClockFace> _clock_face;
     std::unique_ptr<uitk::lvgl_cpp::Container> _pivot_dot;
     std::unique_ptr<uitk::lvgl_cpp::Container> _rod;
-    std::unique_ptr<uitk::lvgl_cpp::Container> _bob_rim;
-    std::unique_ptr<uitk::lvgl_cpp::Container> _bob_fill;
-    std::unique_ptr<uitk::lvgl_cpp::Container> _bob_shine;
+    std::unique_ptr<uitk::lvgl_cpp::Container> _bob;
 
     bool _is_dragging        = false;
     double _drag_angle_rad   = 0.0;
